@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ShoppingCart, Menu, Search, X } from 'lucide-react'
+import { ShoppingCart, Menu, Search, X, LogOut } from 'lucide-react'
 import { Container } from './container'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
@@ -10,7 +10,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
-  const { role, toggleRole } = useAuth()
+  const { role, logout } = useAuth()
   const { itemCount } = useCart()
   const navigate = useNavigate()
 
@@ -23,31 +23,52 @@ export function Header() {
     }
   }
 
+  const handleLogout = async () => {
+    await logout()
+    setAdminOpen(false)
+    navigate('/admin/login')
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
       <Container>
         <div className="grid grid-cols-3 h-16 items-center">
           <div className="flex items-center">
-            <Link to="/" className="text-xl font-semibold tracking-tight">
+            <Link to={role === 'admin' ? '/admin' : '/'} className="text-xl font-semibold tracking-tight">
               EZShop
             </Link>
           </div>
 
           <nav className="hidden md:flex items-center justify-center gap-8 text-sm text-muted-foreground">
-            <Link to="/products" className="hover:text-foreground transition-colors">Shop</Link>
-            <Link to="/coupons" className="hover:text-foreground transition-colors">Coupons</Link>
+            {role === 'admin' ? (
+              <>
+                <Link to="/admin" className="hover:text-foreground transition-colors font-medium">Dashboard</Link>
+                <Link to="/admin/products" className="hover:text-foreground transition-colors font-medium">Products</Link>
+                <Link to="/admin/coupons" className="hover:text-foreground transition-colors font-medium">Coupons</Link>
+                <Link to="/admin/purchases" className="hover:text-foreground transition-colors font-medium">Purchases</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/products" className="hover:text-foreground transition-colors font-medium">Shop</Link>
+                <Link to="/coupons" className="hover:text-foreground transition-colors font-medium">Coupons</Link>
+              </>
+            )}
           </nav>
 
           <div className="flex items-center justify-end gap-3">
-            <button
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setSearchOpen(!searchOpen)}
-              aria-label="Search"
-            >
-              {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-            </button>
+            {/* Search option only for customers */}
+            {role !== 'admin' && (
+              <button
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setSearchOpen(!searchOpen)}
+                aria-label="Search"
+              >
+                {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+              </button>
+            )}
 
-            <div className="relative hidden md:block">
+            {/* Profile Dropdown */}
+            <div className="relative">
               <button
                 onClick={() => setAdminOpen(!adminOpen)}
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -64,28 +85,26 @@ export function Header() {
                   <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-radius border border-border bg-surface-raised py-1 shadow-lg">
                     {role === 'admin' ? (
                       <>
-                        <Link to="/admin" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Admin Dashboard</Link>
+                        <Link to="/admin" className="block px-4 py-2 text-sm hover:bg-surface font-medium" onClick={() => setAdminOpen(false)}>Admin Dashboard</Link>
                         <Link to="/admin/products" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Manage Products</Link>
                         <Link to="/admin/coupons" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Manage Coupons</Link>
+                        <Link to="/admin/purchases" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Recent Purchases</Link>
                         <div className="border-t border-border my-1" />
                         <button
-                          onClick={() => { toggleRole(); setAdminOpen(false) }}
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-surface"
+                          onClick={handleLogout}
+                          className="flex items-center gap-1.5 w-full text-left px-4 py-2 text-sm text-error hover:bg-surface"
                         >
-                          Switch to User
+                          <LogOut className="h-4 w-4" /> Sign Out
                         </button>
                       </>
                     ) : (
                       <>
-                        <Link to="/account" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>My Account</Link>
-                        <Link to="/account/orders" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Orders</Link>
+                        <Link to="/account" className="block px-4 py-2 text-sm hover:bg-surface font-medium" onClick={() => setAdminOpen(false)}>My Account</Link>
+                        <Link to="/account/orders" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Order History</Link>
                         <div className="border-t border-border my-1" />
-                        <button
-                          onClick={() => { toggleRole(); setAdminOpen(false) }}
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-surface"
-                        >
-                          Switch to Admin
-                        </button>
+                        <Link to="/admin/login" className="block px-4 py-2 text-sm hover:bg-surface text-primary" onClick={() => setAdminOpen(false)}>
+                          Admin Portal
+                        </Link>
                       </>
                     )}
                   </div>
@@ -93,17 +112,20 @@ export function Header() {
               )}
             </div>
 
-            <Link to="/cart" className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ShoppingCart className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                  {itemCount > 99 ? '99+' : itemCount}
-                </span>
-              )}
-            </Link>
+            {/* Shopping Cart only for customers */}
+            {role !== 'admin' && (
+              <Link to="/cart" className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <button
-              className="md:hidden p-2"
+              className="md:hidden p-2 text-muted-foreground hover:text-foreground"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Menu"
             >
@@ -112,7 +134,7 @@ export function Header() {
           </div>
         </div>
 
-        {searchOpen && (
+        {searchOpen && role !== 'admin' && (
           <div className="pb-3">
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -131,18 +153,30 @@ export function Header() {
         {menuOpen && (
           <div className="md:hidden border-t border-border py-3">
             <nav className="flex flex-col gap-2">
-              <Link to="/products" className="px-2 py-2 text-sm hover:text-[#DA3A2F]" onClick={() => setMenuOpen(false)}>Shop</Link>
-              <Link to="/coupons" className="px-2 py-2 text-sm hover:text-[#DA3A2F]" onClick={() => setMenuOpen(false)}>Coupons</Link>
-              <Link to="/cart" className="px-2 py-2 text-sm hover:text-[#DA3A2F]" onClick={() => setMenuOpen(false)}>Cart</Link>
-              <Link to={role === 'admin' ? '/admin' : '/account'} className="px-2 py-2 text-sm hover:text-[#DA3A2F]" onClick={() => setMenuOpen(false)}>
-                {role === 'admin' ? 'Admin Dashboard' : 'My Account'}
-              </Link>
-              <button
-                onClick={() => { toggleRole(); setMenuOpen(false) }}
-                className="px-2 py-2 text-sm text-left hover:text-[#DA3A2F]"
-              >
-                Switch to {role === 'admin' ? 'User' : 'Admin'}
-              </button>
+              {role === 'admin' ? (
+                <>
+                  <Link to="/admin" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
+                  <Link to="/admin/products" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Products</Link>
+                  <Link to="/admin/coupons" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Coupons</Link>
+                  <Link to="/admin/purchases" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Purchases</Link>
+                  <button
+                    onClick={() => { handleLogout(); setMenuOpen(false); }}
+                    className="flex items-center gap-1.5 px-2 py-2 text-sm text-left text-error hover:text-primary"
+                  >
+                    <LogOut className="h-4 w-4" /> Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/products" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Shop</Link>
+                  <Link to="/coupons" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Coupons</Link>
+                  <Link to="/cart" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Cart</Link>
+                  <Link to="/account" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
+                  <Link to="/admin/login" className="px-2 py-2 text-sm hover:text-primary text-primary" onClick={() => setMenuOpen(false)}>
+                    Admin Portal
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         )}

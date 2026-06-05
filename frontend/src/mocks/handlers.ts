@@ -239,4 +239,9 @@ export const handlers = [
     if (!order) return new HttpResponse(null, { status: 404 })
     return HttpResponse.json({ id: order.id, status: order.status })
   }),
+
+  http.get('/api/admin/orders', async () => {
+    await sleep()
+    return HttpResponse.json(db.order.getAll())
+  }),
 ]
