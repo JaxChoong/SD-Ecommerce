@@ -223,4 +223,23 @@ export function seed() {
     shippingAddress: { id: 'a1', fullName: 'Alex Tan', phone: '012-3456789', email: 'alex@example.com', address: '12, Jalan Bukit Bintang', city: 'Kuala Lumpur', state: 'WP Kuala Lumpur', postcode: '55100', isDefault: true },
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   })
+
+  // Create additional mock orders to test pagination and filters (ORD-004 to ORD-015)
+  for (let i = 4; i <= 15; i++) {
+    db.order.create({
+      id: `ORD-0${i < 10 ? '0' + i : i}`,
+      items: [
+        { id: `oi-seed-${i}`, productId: String(i), productName: `Seed item ${i}`, productImage: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200&h=200&fit=crop', price: 10 * i, quantity: 1 }
+      ],
+      subtotal: 10 * i,
+      discount: 0,
+      shipping: 10,
+      total: 10 * i + 10,
+      paymentMethod: { type: 'ewallet', provider: 'tng' } as const,
+      status: 'paid',
+      shippingAddress: { id: 'a1', fullName: 'Alex Tan', phone: '012-3456789', email: 'alex@example.com', address: '12, Jalan Bukit Bintang', city: 'Kuala Lumpur', state: 'WP Kuala Lumpur', postcode: '55100', isDefault: true },
+      // Stagger dates: i days ago
+      createdAt: new Date(Date.now() - 86400000 * i).toISOString(),
+    })
+  }
 }
