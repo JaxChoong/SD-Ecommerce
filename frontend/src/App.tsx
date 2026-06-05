@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastContainer } from './components/ui/toast'
 import { Header } from './components/layout/header'
+import { SessionTimeoutPrompt } from './components/layout/session-timeout-prompt'
 import { Footer } from './components/layout/footer'
 import { MobileNav } from './components/layout/mobile-nav'
 import Home from './pages/Home'
@@ -41,6 +42,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <SessionTimeoutPrompt />
         <CartProvider>
           <ToastContainer>
             <div className="flex min-h-screen flex-col">

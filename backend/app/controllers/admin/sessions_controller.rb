@@ -11,7 +11,11 @@ module Admin
 
       if admin&.authenticate(params[:password])
         token = AdminSessionManager.instance.start_session(admin.username)
-        render json: { token: token, username: admin.username }
+        render json: {
+          token: token,
+          username: admin.username,
+          expires_at: AdminSessionManager.instance.expires_at.iso8601
+        }
       else
         render json: { error: 'Invalid username or password' }, status: :unauthorized
       end
@@ -27,7 +31,11 @@ module Admin
     def show
       token = request.headers['Authorization']&.split(' ')&.last
       if AdminSessionManager.instance.validate_session(token)
-        render json: { valid: true, username: AdminSessionManager.instance.active_token }
+        render json: {
+          valid: true,
+          username: AdminSessionManager.instance.active_token,
+          expires_at: AdminSessionManager.instance.expires_at.iso8601
+        }
       else
         render json: { valid: false }, status: :unauthorized
       end
