@@ -5,7 +5,10 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Checkbox } from '../../components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useAuth } from '../../context/AuthContext'
+
+const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dresses']
 
 export default function AdminCouponForm() {
   const { id } = useParams()
@@ -18,6 +21,7 @@ export default function AdminCouponForm() {
     description: '',
     discountType: 'percentage' as 'percentage' | 'fixed',
     discountValue: '',
+    category: 'all',
     expiresAt: '',
     isActive: true,
   })
@@ -39,6 +43,7 @@ export default function AdminCouponForm() {
           description: c.name || '',
           discountType: (c.type || 'percentage') as 'percentage' | 'fixed',
           discountValue: String(c.discountValue || ''),
+          category: c.category || 'all',
           expiresAt: c.endDate ? c.endDate.split('T')[0] : '',
           isActive: c.IsActive !== false,
         })
@@ -53,19 +58,18 @@ export default function AdminCouponForm() {
     e.preventDefault()
     setSaving(true)
 
-    // Calculate start/end dates
     const start = new Date().toISOString()
     const end = form.expiresAt 
       ? new Date(form.expiresAt).toISOString() 
       : new Date(Date.now() + 365 * 86400000).toISOString()
 
-    // Wrap promotion parameters under the 'promotion' namespace for Rails strong params
     const body = {
       promotion: {
         promoCode: form.code,
         name: form.description,
         type: form.discountType,
         discountValue: Number(form.discountValue),
+        category: form.category,
         startDate: start,
         endDate: end,
         IsActive: form.isActive,
@@ -116,6 +120,16 @@ export default function AdminCouponForm() {
           <div className="sm:col-span-2">
             <Label htmlFor="description">Campaign Description / Name</Label>
             <Input id="description" value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="E.g., 20% Off Storewide" required />
+          </div>
+          <div>
+            <Label htmlFor="category">Applicable Clothing Category</Label>
+            <Select value={form.category} onValueChange={(v) => update('category', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories (Global)</SelectItem>
+                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Discount Type</Label>

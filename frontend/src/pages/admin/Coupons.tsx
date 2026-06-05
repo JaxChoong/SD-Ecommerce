@@ -3,20 +3,34 @@ import { Link } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useAuth } from '../../context/AuthContext'
 import type { Coupon } from '../../types'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 
+const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dresses']
+
+// Extend the Coupon type locally to include category for display
+interface ExtendedCoupon extends Coupon {
+  category: string
+}
+
 export default function AdminCoupons() {
   const { adminToken } = useAuth()
-  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [coupons, setCoupons] = useState<ExtendedCoupon[]>([])
   const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [loading, setLoading] = useState(true)
 
   const fetchCoupons = () => {
     setLoading(true)
-    const params = search ? `?search=${encodeURIComponent(search)}` : ''
-    fetch(`/api/admin/promotions${params}`, {
+    const params = new URLSearchParams()
+    if (search.trim()) params.set('search', search.trim())
+    if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory)
+
+    const queryString = params.toString() ? `?${params.toString()}` : ''
+
+    fetch(`/api/admin/promotions${queryString}`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
       },
@@ -26,16 +40,17 @@ export default function AdminCoupons() {
         return r.json()
       })
       .then((data) => {
-        const mapped: Coupon[] = (data || []).map((c: any) => ({
+        const mapped: ExtendedCoupon[] = (data || []).map((c: any) => ({
           id: String(c.promotionid),
           code: c.promoCode,
           description: c.name || '',
           discountType: c.type as 'percentage' | 'fixed',
           discountValue: Number(c.discountValue),
+          category: c.category || 'all',
           expiresAt: c.endDate,
           isActive: Boolean(c.IsActive),
-          usageCount: 0, // Mocked as it is not part of the Page 30 database schema
-          usageLimit: undefined, // Mocked as it is not part of the Page 30 database schema
+          usageCount: 0,
+          usageLimit: undefined,
         }))
         setCoupons(mapped)
       })
@@ -45,7 +60,7 @@ export default function AdminCoupons() {
 
   useEffect(() => {
     fetchCoupons()
-  }, [search, adminToken])
+  }, [search, selectedCategory, adminToken])
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this coupon?')) return
@@ -63,6 +78,13 @@ export default function AdminCoupons() {
     }
   }
 
+  const clearFilters = () => {
+    setSearch('')
+    setSelectedCategory('all')
+  }
+
+  const hasActiveFilters = search !== '' || selectedCategory !== 'all'
+
   return (
     <Container className="py-6 sm:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -71,12 +93,38 @@ export default function AdminCoupons() {
           <Link to="/admin/coupons/new"><Plus className="h-4 w-4 mr-1" /> New Coupon</Link>
         </Button>
       </div>
-      <Input
-        placeholder="Search coupons..."
-        className="max-w-xs mb-4"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+
+      {/* Search and Filters bar */}
+      <div className="grid gap-4 sm:grid-cols-3 mb-6 bg-surface p-4 rounded-radius border border-border/20">
+        <div>
+          <Input
+            placeholder="Search code or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center justify-end">
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground w-full sm:w-auto">
+              Reset Filters
+            </Button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : coupons.length === 0 ? (
@@ -88,6 +136,7 @@ export default function AdminCoupons() {
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="pb-3 font-medium">Code</th>
+                  <th className="pb-3 font-medium">Category Target</th>
                   <th className="pb-3 font-medium">Discount</th>
                   <th className="pb-3 font-medium">Description</th>
                   <th className="pb-3 font-medium">Expires At</th>
@@ -100,6 +149,9 @@ export default function AdminCoupons() {
                   <tr key={c.id} className="border-b border-border">
                     <td className="py-3 pr-4">
                       <span className="font-mono text-sm font-medium">{c.code}</span>
+                    </td>
+                    <td className="py-3 pr-4 text-muted-foreground capitalize">
+                      {c.category === 'all' ? 'Global (All)' : c.category}
                     </td>
                     <td className="py-3 pr-4">
                       {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`}
@@ -140,7 +192,10 @@ export default function AdminCoupons() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`} • {c.description}
+                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`} • Target: <span className="capitalize">{c.category === 'all' ? 'Global' : c.category}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {c.description}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}

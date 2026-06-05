@@ -6,6 +6,7 @@ class Promotion < ApplicationRecord
   validates :type, presence: true, inclusion: { in: %w[percentage fixed] }
   validates :discountValue, presence: true, numericality: { greater_than: 0 }
   validates :promoCode, presence: true, uniqueness: true
+  validates :category, presence: true
   validates :startDate, presence: true
   validates :endDate, presence: true
   validate :end_date_after_start_date

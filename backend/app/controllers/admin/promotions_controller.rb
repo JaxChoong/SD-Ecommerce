@@ -4,7 +4,11 @@ module Admin
 
     # GET /admin/promotions
     def index
-      promotions = @proxy.list_promotions
+      filters = {
+        category: params[:category],
+        search: params[:search]
+      }
+      promotions = @proxy.list_promotions(filters)
       render json: promotions
     end
 
@@ -39,7 +43,7 @@ module Admin
     end
 
     def promotion_params
-      params.require(:promotion).permit(:name, :type, :discountValue, :promoCode, :startDate, :endDate, :IsActive)
+      params.require(:promotion).permit(:name, :type, :discountValue, :promoCode, :category, :startDate, :endDate, :IsActive)
     end
   end
 end
