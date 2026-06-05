@@ -167,7 +167,7 @@ export default function AdminPurchases() {
                 </div>
                 <CardContent className="p-4 sm:p-6 grid gap-6 md:grid-cols-3">
                   {/* Items Section */}
-                  <div className="md:col-span-2 space-y-3">
+                  <div className="md:col-span-2 space-y-3 min-w-0">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Items</h3>
                     <div className="divide-y divide-border/30">
                       {order.items.map((item, idx) => (
@@ -176,7 +176,7 @@ export default function AdminPurchases() {
                             <img src={item.productImage} alt="" className="h-full w-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{item.productName}</p>
+                            <p className="font-medium text-sm line-clamp-2 break-words leading-snug">{item.productName}</p>
                             <p className="text-xs text-muted-foreground">Qty: {item.quantity} • RM{item.price.toFixed(2)} each</p>
                           </div>
                           <div className="text-right shrink-0">
@@ -209,7 +209,7 @@ export default function AdminPurchases() {
                   </div>
 
                   {/* Customer / Shipping Section */}
-                  <div className="space-y-4 border-t md:border-t-0 md:border-l border-border/30 pt-4 md:pt-0 md:pl-6">
+                  <div className="space-y-4 border-t md:border-t-0 md:border-l border-border/30 pt-4 md:pt-0 md:pl-6 min-w-0">
                     <div className="space-y-3">
                       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Customer</h3>
                       <div className="space-y-2 text-sm">
@@ -217,7 +217,7 @@ export default function AdminPurchases() {
                           <User className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="font-medium">{order.shippingAddress.fullName}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="truncate">{order.shippingAddress.email}</span>
                         </div>
@@ -251,13 +251,13 @@ export default function AdminPurchases() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-border/30 pt-4 mt-6">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/30 pt-4 mt-6">
+              <span className="text-sm text-muted-foreground text-center sm:text-left">
                 Showing {Math.min(filteredOrders.length, (currentPage - 1) * itemsPerPage + 1)} to{' '}
                 {Math.min(filteredOrders.length, currentPage * itemsPerPage)} of{' '}
                 {filteredOrders.length} orders
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
@@ -266,7 +266,7 @@ export default function AdminPurchases() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium whitespace-nowrap">
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button

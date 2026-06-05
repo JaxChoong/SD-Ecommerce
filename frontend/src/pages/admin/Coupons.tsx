@@ -220,31 +220,55 @@ export default function AdminCoupons() {
 
           <div className="md:hidden space-y-3">
             {paginatedCoupons.map((c) => (
-              <div key={c.id} className="bg-surface rounded-radius p-3 flex items-start gap-3">
+              <div key={c.id} className="bg-surface rounded-radius p-4 border border-border/20 shadow-sm flex items-start gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-sm font-medium">{c.code}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                      {c.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 mb-3 border-b border-border/10 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-semibold text-primary">{c.code}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                        {c.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                        <Link to={`/admin/coupons/${c.id}/edit`}><Pencil className="h-4 w-4" /></Link>
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} className="h-8 w-8 p-0">
+                        <Trash2 className="h-4 w-4 text-error" />
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate font-mono">
-                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`} • Target: <span className="capitalize">{c.category === 'all' ? 'Global' : c.category}</span> • Used: {c.usageCount}/{c.usageLimit != null ? c.usageLimit : '∞'}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {c.description}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                    <Link to={`/admin/coupons/${c.id}/edit`}><Pencil className="h-4 w-4" /></Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} className="h-8 w-8 p-0">
-                    <Trash2 className="h-4 w-4 text-error" />
-                  </Button>
+                  
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex justify-between py-0.5 border-b border-border/5">
+                      <span>Discount</span>
+                      <span className="font-semibold text-foreground">
+                        {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-0.5 border-b border-border/5">
+                      <span>Category Target</span>
+                      <span className="capitalize text-foreground font-medium">
+                        {c.category === 'all' ? 'Global (All)' : c.category}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-0.5 border-b border-border/5">
+                      <span>Redemptions</span>
+                      <span className="font-mono text-foreground font-medium">
+                        {c.usageCount} / {c.usageLimit != null ? c.usageLimit : '∞'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                      <span>Expires At</span>
+                      <span className="text-foreground">
+                        {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}
+                      </span>
+                    </div>
+                    <div className="border-t border-border/10 pt-2.5 mt-2">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80 block mb-1 font-medium">Campaign Description</span>
+                      <p className="text-foreground/90 text-xs leading-relaxed">{c.description}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -252,13 +276,13 @@ export default function AdminCoupons() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-border/30 pt-4 mt-6">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/30 pt-4 mt-6">
+              <span className="text-sm text-muted-foreground text-center sm:text-left">
                 Showing {Math.min(coupons.length, (currentPage - 1) * itemsPerPage + 1)} to{' '}
                 {Math.min(coupons.length, currentPage * itemsPerPage)} of{' '}
                 {coupons.length} coupons
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
@@ -267,7 +291,7 @@ export default function AdminCoupons() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium whitespace-nowrap">
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button

@@ -350,8 +350,8 @@ export default function AdminProducts() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-border/30 pt-4 mt-6">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/30 pt-4 mt-6">
+              <span className="text-sm text-muted-foreground text-center sm:text-left">
                 Showing{" "}
                 {Math.min(
                   products.length,
@@ -360,7 +360,7 @@ export default function AdminProducts() {
                 to {Math.min(products.length, currentPage * itemsPerPage)} of{" "}
                 {products.length} products
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
@@ -369,7 +369,7 @@ export default function AdminProducts() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium whitespace-nowrap">
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button
