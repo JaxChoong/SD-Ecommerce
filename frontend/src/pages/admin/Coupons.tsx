@@ -3,10 +3,12 @@ import { Link } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
+import { useAuth } from '../../context/AuthContext'
 import type { Coupon } from '../../types'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 
 export default function AdminCoupons() {
+  const { adminToken } = useAuth()
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -14,18 +16,51 @@ export default function AdminCoupons() {
   const fetchCoupons = () => {
     setLoading(true)
     const params = search ? `?search=${encodeURIComponent(search)}` : ''
-    fetch(`/api/admin/coupons${params}`)
-      .then((r) => r.json())
-      .then((data) => setCoupons(data))
+    fetch(`/api/admin/promotions${params}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to load promotions')
+        return r.json()
+      })
+      .then((data) => {
+        const mapped: Coupon[] = (data || []).map((c: any) => ({
+          id: String(c.promotionid),
+          code: c.promoCode,
+          description: c.name || '',
+          discountType: c.type as 'percentage' | 'fixed',
+          discountValue: Number(c.discountValue),
+          expiresAt: c.endDate,
+          isActive: Boolean(c.IsActive),
+          usageCount: 0, // Mocked as it is not part of the Page 30 database schema
+          usageLimit: undefined, // Mocked as it is not part of the Page 30 database schema
+        }))
+        setCoupons(mapped)
+      })
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchCoupons() }, [search])
+  useEffect(() => {
+    fetchCoupons()
+  }, [search, adminToken])
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this coupon?')) return
-    await fetch(`/api/admin/coupons/${id}`, { method: 'DELETE' })
-    fetchCoupons()
+    try {
+      const res = await fetch(`/api/admin/promotions/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+        },
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      fetchCoupons()
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete coupon')
+    }
   }
 
   return (
@@ -54,8 +89,8 @@ export default function AdminCoupons() {
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="pb-3 font-medium">Code</th>
                   <th className="pb-3 font-medium">Discount</th>
-                  <th className="pb-3 font-medium">Min Purchase</th>
-                  <th className="pb-3 font-medium">Usage</th>
+                  <th className="pb-3 font-medium">Description</th>
+                  <th className="pb-3 font-medium">Expires At</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Actions</th>
                 </tr>
@@ -68,13 +103,10 @@ export default function AdminCoupons() {
                     </td>
                     <td className="py-3 pr-4">
                       {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`}
-                      {c.maxDiscount ? ` (max RM${c.maxDiscount})` : ''}
                     </td>
+                    <td className="py-3 pr-4 text-muted-foreground">{c.description}</td>
                     <td className="py-3 pr-4 text-muted-foreground">
-                      {c.minPurchase ? `RM${c.minPurchase}` : 'None'}
-                    </td>
-                    <td className="py-3 pr-4 text-muted-foreground">
-                      {c.usageCount}/{c.usageLimit || '∞'}
+                      {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="py-3 pr-4">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
@@ -108,12 +140,10 @@ export default function AdminCoupons() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`}
-                    {c.maxDiscount ? ` (max RM${c.maxDiscount})` : ''}
-                    {c.minPurchase ? ` • Min RM${c.minPurchase}` : ''}
+                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`} • {c.description}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Used: {c.usageCount}/{c.usageLimit || '∞'}
+                    Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}
                   </p>
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">

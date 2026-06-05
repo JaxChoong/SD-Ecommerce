@@ -5,58 +5,94 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Checkbox } from '../../components/ui/checkbox'
+import { useAuth } from '../../context/AuthContext'
 
 export default function AdminCouponForm() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { adminToken } = useAuth()
   const isEdit = !!id
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
-    code: '', description: '', discountType: 'percentage' as 'percentage' | 'fixed',
-    discountValue: '', minPurchase: '', maxDiscount: '', expiresAt: '', usageLimit: '', isActive: true,
+    code: '',
+    description: '',
+    discountType: 'percentage' as 'percentage' | 'fixed',
+    discountValue: '',
+    expiresAt: '',
+    isActive: true,
   })
 
   useEffect(() => {
-    if (!id) return
-    fetch(`/api/admin/coupons`)
-      .then((r) => r.json())
-      .then((coupons) => {
-        const c = coupons.find((c: { id: string }) => c.id === id)
-        if (c) {
-          setForm({
-            code: c.code, description: c.description, discountType: c.discountType,
-            discountValue: String(c.discountValue), minPurchase: c.minPurchase ? String(c.minPurchase) : '',
-            maxDiscount: c.maxDiscount ? String(c.maxDiscount) : '',
-            expiresAt: c.expiresAt ? c.expiresAt.split('T')[0] : '',
-            usageLimit: c.usageLimit ? String(c.usageLimit) : '', isActive: c.isActive,
-          })
-        }
+    if (!id || !adminToken) return
+    fetch(`/api/admin/promotions/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to load promotion')
+        return r.json()
       })
-  }, [id])
+      .then((c) => {
+        setForm({
+          code: c.promoCode || '',
+          description: c.name || '',
+          discountType: (c.type || 'percentage') as 'percentage' | 'fixed',
+          discountValue: String(c.discountValue || ''),
+          expiresAt: c.endDate ? c.endDate.split('T')[0] : '',
+          isActive: c.IsActive !== false,
+        })
+      })
+      .catch((err) => {
+        console.error(err)
+        alert('Error loading coupon information.')
+      })
+  }, [id, adminToken])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
+
+    // Calculate start/end dates
+    const start = new Date().toISOString()
+    const end = form.expiresAt 
+      ? new Date(form.expiresAt).toISOString() 
+      : new Date(Date.now() + 365 * 86400000).toISOString()
+
+    // Wrap promotion parameters under the 'promotion' namespace for Rails strong params
     const body = {
-      code: form.code,
-      description: form.description,
-      discountType: form.discountType,
-      discountValue: Number(form.discountValue),
-      minPurchase: form.minPurchase ? Number(form.minPurchase) : undefined,
-      maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : undefined,
-      expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : new Date(Date.now() + 365 * 86400000).toISOString(),
-      usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
-      isActive: form.isActive,
-    }
-    try {
-      if (isEdit) {
-        await fetch(`/api/admin/coupons/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      } else {
-        await fetch('/api/admin/coupons', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      promotion: {
+        promoCode: form.code,
+        name: form.description,
+        type: form.discountType,
+        discountValue: Number(form.discountValue),
+        startDate: start,
+        endDate: end,
+        IsActive: form.isActive,
       }
+    }
+
+    try {
+      const url = isEdit ? `/api/admin/promotions/${id}` : '/api/admin/promotions'
+      const method = isEdit ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        const errorMsg = errorData.errors ? errorData.errors.join(', ') : 'Unknown error'
+        throw new Error(errorMsg)
+      }
+
       navigate('/admin/coupons')
-    } catch {
-      alert('Failed to save coupon.')
+    } catch (err: any) {
+      alert(`Failed to save coupon: ${err.message}`)
     } finally {
       setSaving(false)
     }
@@ -70,16 +106,16 @@ export default function AdminCouponForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="code">Code</Label>
-            <Input id="code" value={form.code} onChange={(e) => update('code', e.target.value.toUpperCase())} placeholder="SAVE20" required />
+            <Label htmlFor="code">Promo Code</Label>
+            <Input id="code" value={form.code} onChange={(e) => update('code', e.target.value.toUpperCase())} placeholder="E.g., SAVE20" required />
           </div>
           <div>
             <Label htmlFor="expiresAt">Expiry Date</Label>
-            <Input id="expiresAt" type="date" value={form.expiresAt} onChange={(e) => update('expiresAt', e.target.value)} />
+            <Input id="expiresAt" type="date" value={form.expiresAt} onChange={(e) => update('expiresAt', e.target.value)} required />
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="description">Description</Label>
-            <Input id="description" value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Save 20% on your order" required />
+            <Label htmlFor="description">Campaign Description / Name</Label>
+            <Input id="description" value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="E.g., 20% Off Storewide" required />
           </div>
           <div>
             <Label>Discount Type</Label>
@@ -98,21 +134,9 @@ export default function AdminCouponForm() {
             <Label htmlFor="discountValue">{form.discountType === 'percentage' ? 'Discount (%)' : 'Discount (RM)'}</Label>
             <Input id="discountValue" type="number" step="0.01" value={form.discountValue} onChange={(e) => update('discountValue', e.target.value)} required />
           </div>
-          <div>
-            <Label htmlFor="minPurchase">Min Purchase (RM)</Label>
-            <Input id="minPurchase" type="number" step="0.01" value={form.minPurchase} onChange={(e) => update('minPurchase', e.target.value)} placeholder="Optional" />
-          </div>
-          <div>
-            <Label htmlFor="maxDiscount">Max Discount (RM)</Label>
-            <Input id="maxDiscount" type="number" step="0.01" value={form.maxDiscount} onChange={(e) => update('maxDiscount', e.target.value)} placeholder="For percentage only" />
-          </div>
-          <div>
-            <Label htmlFor="usageLimit">Usage Limit</Label>
-            <Input id="usageLimit" type="number" value={form.usageLimit} onChange={(e) => update('usageLimit', e.target.value)} placeholder="Unlimited if empty" />
-          </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:col-span-2">
             <Checkbox id="isActive" checked={form.isActive} onCheckedChange={(c) => update('isActive', c === true)} />
-            <Label htmlFor="isActive" className="cursor-pointer">Active</Label>
+            <Label htmlFor="isActive" className="cursor-pointer">Active Campaign</Label>
           </div>
         </div>
         <div className="flex gap-3 pt-4">

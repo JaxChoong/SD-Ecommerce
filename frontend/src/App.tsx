@@ -21,11 +21,12 @@ import AdminProducts from './pages/admin/Products'
 import AdminProductForm from './pages/admin/ProductForm'
 import AdminCoupons from './pages/admin/Coupons'
 import AdminCouponForm from './pages/admin/CouponForm'
+import AdminLogin from './pages/admin/Login'
 import type { ReactNode } from 'react'
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { role } = useAuth()
-  if (role !== 'admin') return <Navigate to="/" replace />
+  if (role !== 'admin') return <Navigate to="/admin/login" replace />
   return <>{children}</>
 }
 
@@ -50,7 +51,9 @@ export default function App() {
                   <Route path="/account/orders" element={<AccountOrders />} />
                   <Route path="/account/addresses" element={<AccountAddresses />} />
                   <Route path="/account/payment-methods" element={<AccountPaymentMethods />} />
+                  <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+
                   <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
                   <Route path="/admin/products/new" element={<AdminRoute><AdminProductForm /></AdminRoute>} />
                   <Route path="/admin/products/:id/edit" element={<AdminRoute><AdminProductForm /></AdminRoute>} />

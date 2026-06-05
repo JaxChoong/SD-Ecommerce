@@ -1,0 +1,4261 @@
+        Faculty of Computing and Informatics
+
+
+             CSE 6234 - Software Design
+
+
+
+                    ASSIGNMENT
+
+
+                  Tutorial Section: TT4L
+                       Group ID: 6
+
+
+
+
+          Member Name                    Student ID
+
+        CHOW YING TONG                  242UC244NK
+       CHOONG JIA XUEN                  242UC244K1
+
+SITI ZULAIKHA BINTI ABDUL RAZIF         242UC243TL
+
+         LIM ZHEN PING                   1221102373
+Table of Contents
+
+
+Abstract (Executive Summary)                                                            4
+1. Introduction                                                                         5
+    1.1. Abstract                                                                       5
+
+    1.2. Problem Statement                                                              5
+    1.3. Project Objectives                                                             6
+
+    1.4. Literature Review                                                              7
+       1.4.1 Foundational Blueprints: Strategy, Observer, and Decorator Patterns        7
+       1.4.2 Mitigating Complexity in Dynamic Pricing via the Strategy Pattern          8
+
+       1.4.3 Managing Overlapping Promotions and Modularity                             9
+    1.5. Project and System Scope                                                       9
+
+       1.5.1 In-Scope Capabilities                                                     10
+       1.5.2 Out-of-Scope Capabilities                                                 10
+       1.5.3 Business Rules                                                            11
+
+2. System Overview                                                                     13
+    2.1. Generic Use Cases                                                             13
+       2.1.1 Actors Involved                                                           13
+
+       2.1.2 Use Cases by Actor                                                        13
+           2.1.2.1 Customer Use Cases                                                  13
+
+           2.1.2.2 Admin Use Cases                                                     19
+           2.1.2.3 EZShop System Use Cases                                             22
+       2.1.3 Use Case Diagram                                                          27
+
+    2.2. Class Diagram                                                                 27
+    2.3. ERD (Entity Relationship Diagram)                                             29
+
+       2.3.1 ERD                                                                       29
+       2.3.2 Entity Relationship Diagram Summary                                       30
+    2.4. Object Diagrams                                                               31
+
+       2.4.1 Base Case Checkout (No Promotions Applied)                                31
+       2.4.2 Pre-Checkout                                                              32
+
+       2.4.3 Actual Checkout (Multiple Promotions/Discounts)                           33
+    2.5 Sequence Diagrams                                                              34
+       2.5.1 Browse Product Catalog (Customer)                                         34
+
+       2.5.2 Manage Shopping Cart (Customer)                                           35
+       2.5.3 Initiate Checkout (Customer)                                              36
+
+       2.5.4 Apply Promotional Codes (Customer)                                        38
+       2.5.5 Manage Product Inventory (Admin)                                          39
+       2.5.6 Configure Promotional Campaigns (Admin)                                   40
+
+       2.5.7 Calculate Dynamic Pricing (EZShop System)                                 41
+       2.5.8 Simulate Payment Processing (EZShop System)                               42
+
+       2.5.9 Send Order Notifications (EZShop System)                                  43
+3. Requirements                                                                        45
+    3.1. Software Design Concepts and Design Principles                                45
+
+       3.1.1 Software Design Concepts applied                                          45
+          Modularity                                                               45
+          Functional Independence                                                  45
+
+          Encapsulation                                                            46
+       3.1.2 SOLID Design Principles applied                                       46
+          Single Responsibility Principle (SRP)                                    46
+
+          Open/Closed Principle (OCP)                                              48
+          Liskov Substitution Principle (LSP)                                      50
+
+          Interface Segregation Principle (ISP)                                    52
+          Dependency Inversion Principle (DIP)                                     53
+       3.1.3 Software Design Considerations                                        55
+
+          a. Scalability and Performance                                           55
+          b. Maintainability and Readability                                       56
+
+          c. Reliability and Consistency                                           56
+4. Proposed Design Patterns                                                        57
+   a. Strategy Pattern                                                             57
+
+       i. Function or Software Component Affected                                  57
+       ii. Description of work flow or data flow                                   57
+
+       iii. Sample Class Diagram                                                   59
+       iv. Sample Other UML Notations                                              61
+
+       v. Sample Potential Code                                                    61
+       vi. Benefit                                                                 64
+       vii. Limitations                                                            64
+
+   b. Observer Pattern                                                             65
+       i. Function or Software Component Affected                                  65
+
+       ii. Description of work flow or data flow                                   66
+       iii. Sample Class Diagram                                                   67
+       iv. Sample Other UML Notations                                              68
+
+       v. Sample Potential Code                                                    68
+       vi. Benefit                                                                 71
+
+       vii. Limitations                                                            72
+   c. Decorator Pattern                                                            73
+       i. Function or Software Component Affected                                  73
+
+       ii. Description of work flow or data flow                                   74
+       iii. Sample Class Diagram                                                   75
+
+       iv. Sample Other UML Notations                                              76
+       v. Sample Potential Code                                                    76
+
+       vi. Benefit                                                                 80
+       vii. Limitations                                                            81
+5. Conclusion and Suggestion                                                       82
+
+6. Bibliography/Reference                                                          84
+Abstract (Executive Summary)
+
+This Software Design Document outlines the architectural blueprint for EZShop, a modern
+
+e-commerce clothing platform. As online retail marketing grows increasingly sophisticated,
+traditional backend systems often accumulate severe technical debt when attempting to
+
+process overlapping promotional campaigns and diverse payment methods. Poorly designed
+
+pricing engines frequently degrade into deeply nested conditional statements and tightly
+
+coupled dependencies, violating core software engineering principles and hindering future
+scalability.
+
+
+To resolve these architectural bottlenecks, this project proposes a robust, scalable backend
+infrastructure that strictly adheres to object-oriented programming standards and the SOLID
+
+principles. The proposed solution is engineered around three foundational Gang of Four
+
+(GoF) design patterns to achieve a strict separation of concerns:
+
+    1. The Decorator and Strategy Patterns (Pricing Engine): The system combines
+
+       these two patterns to create a dynamic pricing calculator. The Decorator pattern
+
+       allows the system to recursively "wrap" a shopping cart in multiple promotional
+       layers (e.g., stacking a 20% discount with an RM 5 shipping voucher) without
+
+       triggering a subclass explosion. Simultaneously, the Strategy pattern encapsulates the
+
+       specific mathematical algorithms for these discounts, allowing new promotional rules
+
+       to be integrated dynamically at runtime.
+    2. The Strategy Pattern (Payment Processing): To abstract the checkout workflow
+
+       from external dependencies, the system utilizes the Strategy pattern to define a family
+
+       of interchangeable payment algorithms (Credit Card, E-Wallet, and Online Banking),
+       allowing seamless transaction routing without modifying the core checkout context.
+
+    3. The Observer Pattern (Order Notifications): To ensure the checkout flow remains
+
+       fast and responsive, the Observer pattern decouples the main transaction sequence
+       from secondary post-purchase tasks. Upon a successful payment, the system
+
+       automatically broadcasts state changes to registered observers, triggering independent
+
+       background processes such as inventory deduction and email receipt dispatch.
+
+Ultimately, this document validates that by encapsulating variant algorithms, dynamically
+
+composing object behaviors, and decoupling state notifications, the EZShop architecture
+provides a highly maintainable, easily testable, and extensible foundation capable of adapting
+to future e-commerce business requirements.
+
+
+
+1. Introduction
+
+
+
+1.1. Abstract
+
+With the rapid advancement of technology, online e-commerce stores are more plentiful than
+ever. As a result, online shopping has become the norm for everyday people, owing to the
+
+convenience and ease of the online shopping experience. This is especially true in clothing
+retail, as customers can browse the massive collections of clothing of a particular shop more
+
+efficiently than travelling to the physical store.
+
+
+A major selling point of e-commerce clothing shops is the abundance of discounts and
+
+vouchers. These discounts are often offered as part of a broader promotional campaign by the
+
+retail company to boost sales and drive engagement. However, as marketing campaigns grow
+more complex, the same applies for the discount schemes and benefits. For example, many
+
+brands offer membership tiers, with each tier offering a certain percentage of discounts on
+purchases, while also offering seasonal discounts and rebates for referrals. Although these
+
+discount schemes are the backbone of e-commerce clothing systems, the backend logic can
+
+get complex and convoluted if the architecture is poorly designed. This incurs a significant
+amount of technical debt, slowing down development and making the system difficult to
+
+understand. This has devastating consequences for businesses because more time is spent on
+
+dissecting the architecture instead of actually working on improving the system.
+
+
+The proposed e-commerce clothing system aims to address this pain point. The system
+(“EZShop”) is designed to be able to handle multiple discount types while allowing new
+
+schemes to be integrated seamlessly into the system. This document serves as the Software
+
+Design Proposal and Software Design Pattern Document for EZShop.
+
+
+1.2. Problem Statement
+
+As e-commerce marketing campaigns grow more sophisticated with time, which include
+discount codes, referral discounts, seasonal rebates and so on, the complexities of handling
+
+multiple types of discounts causes the code to deviate from programming best practices. The
+code for calculating these discounts often result in nested conditionals and tight coupling.
+
+Consequently, software design principles are violated, most notably the Single Responsibility
+Principle and Open-Closed Principle, causing the system to be unmaintainable and difficult to
+
+modify or extend without inadvertently breaking existing functionalities. This would not only
+
+make it hard to refactor the existing codebase, but would also make testing extremely
+challenging. For example, unit testing would be nearly impossible due to the tightly-coupled
+
+nature of a poorly-designed architecture, making debugging significantly more difficult.
+
+
+Hence, a viable solution is needed to solve these architectural issues to circumvent this
+
+bottleneck and ensure maintainability.
+
+
+
+1.3. Project Objectives
+The main goal of the project is to design, architect and develop a robust and scalable
+
+architecture for EZShop, an e-commerce platform for selling clothing. More specifically, this
+
+project aims to achieve the following objectives:
+
+    ● To design a backend architecture for EZShop that encompasses all core retail
+        functions, including product catalog management, shopping cart operations, checkout
+
+        processing, order management, inventory control, and customer notification, ensuring
+
+        that each subsystem has clearly defined responsibilities and boundaries in accordance
+        with the Single Responsibility Principle (SRP).
+
+    ● To design a backend architecture that is capable of processing multiple types of
+
+        discount schemes and payment types while maintaining a clear separation of concerns
+        between the discount calculation logic and the checkout flow.
+
+    ● To implement the Strategy Pattern in the Payment Processing module, enabling the
+
+        system to support multiple payment methods, including credit card, online banking,
+
+        and e-wallet, as interchangeable algorithms that can be selected at runtime without
+        modifying the core checkout flow. This will directly enforce the Open/Closed
+
+        Principle (OCP), ensuring new payment methods can be introduced without
+
+        regression risk to existing functionality.
+    ● To implement the Observer Pattern in the Order Notification subsystem, enabling
+
+        multiple independent post-purchase processes: inventory stock deduction and
+
+        customer email confirmation, to be triggered automatically upon order completion.
+        This ensures that the checkout module remains entirely decoupled from its
+       downstream side effects, allowing new post-purchase processes to be registered
+
+       without altering the core order processing logic.
+    ● To implement the Decorator Pattern in the Pricing Engine, enabling multiple
+
+       independent discount types, that is, percentage-based seasonal sales and fixed amount
+
+       vouchers to be stacked dynamically at runtime without relying on a rigid inheritance
+       hierarchy.
+
+
+
+1.4. Literature Review
+
+Design patterns have become a foundational pillar of modern software engineering, ever
+since they were popularized by Erich Gamma, Richard Helm, Ralph Johnson and John
+
+Vlissides, collectively known as the Gang of Four (GoF), in their book Design Patterns:
+
+Elements of Reusable Object-Oriented Software. Design patterns provide standardized and
+reusable solutions to common software design challenges; they also serve as a blueprint for
+
+developers to build systems that are maintainable and scalable. The GoF proposed 23 patterns
+
+across three categories: creational, structural and behavioural, whereby each category is
+
+designed to address distinct design issues. In the case of an e-commerce platform like
+EZShop, discount calculation rules evolve rapidly in response to marketing campaigns,
+
+behavioral patterns that encapsulate variable algorithms are particularly relevant. This
+
+literature review examines three sources: the foundational GoF text that defines the Strategy,
+Observer and Decorator patterns; an empirical Java-based study demonstrating quantifiable
+
+improvements from pattern adoption in e-commerce; and a structural analysis applying the
+
+Decorator pattern to manage overlapping business rules without sub-class explosion.
+
+
+1.4.1 Foundational Blueprints: Strategy, Observer, and Decorator Patterns
+
+The work by the aforementioned Gang of Four (GoF) revolutionized the way modern systems
+
+are engineered and architected. Published in 1994, their work outlined 23 design patterns that
+encompass three categories: namely creational patterns (governing object instantiation),
+
+behavioural patterns (governing interactions between objects while minimising coupling) and
+
+structural patterns (governing class structures). Gamma et. al (1994) describe the practice of
+
+adhering to design patterns as akin to an author following certain “tropes” in their writing,
+such as the “Tragically Fallen Hero” in Hamlet and Macbeth (p. 19). Of direct relevance to
+
+EZShop's discount processing requirements is the Strategy pattern, which is a behavioural
+
+pattern that “defines a family of algorithms, encapsulates each one, and makes them
+interchangeable. Strategy lets the algorithm vary independently from clients that use it" (p.
+
+315). For an e-commerce platform like EZShop, the Strategy pattern is naturally suited to
+discount calculation: percentage discounts, fixed-amount vouchers, seasonal rebates, and
+
+tiered membership discounts can each be implemented as separate concrete strategy classes
+
+conforming to a common interface, while the checkout context remains unchanged when new
+discount types are introduced. Furthermore, the GoF also introduced the Observer pattern, a
+
+behavioural pattern with the intent of defining a one-to-many dependency between objects so
+
+that when one object changes state, all its dependents are notified and updated automatically
+(p. 294). In EZShop, the Observer pattern could prove useful for real-time updates of order
+
+status and notifications, by allowing all “observers” of a particular state to implement the
+
+necessary functionalities associated with a change in the state they are observing. Moreover,
+the Decorator pattern, sometimes known as a “wrapper”, seeks to attach additional
+
+responsibilities to an object dynamically (p. 182). They note that decorators provide a flexible
+
+alternative to subclassing for extending functionality. Within the context of EZShop, this
+
+structural pattern is critical for handling overlapping promotions. Rather than creating a
+convoluted inheritance tree for every possible combination of discounts (such as a
+
+VipAndSeasonalDiscount subclass), the system can simply "wrap" a base checkout total with
+
+multiple, independent decorator classes. Ultimately, the GoF catalog provides the theoretical
+foundation for these three patterns, proving that encapsulating algorithms, decoupling state
+
+notifications, and dynamically composing objects are universally recognized strategies for
+
+building resilient systems.
+
+
+1.4.2 Mitigating Complexity in Dynamic Pricing via the Strategy Pattern
+
+Cappi et. al (2001) provides an architectural analysis of how to manage dynamic,
+
+personalized business rules within e-commerce applications. The authors highlight that as
+e-commerce     platforms evolve     to include personalized pricing, dynamic product
+
+recommendations, and targeted promotional campaigns, the underlying logic often degrades
+
+into deeply nested conditional statements. They specifically note that attempting to code
+
+personalized discount algorithms through traditional subclass wrappers or massive “case”
+statements is an approach that "won't scale up and the code ends completely messed up" (p.
+
+463). To resolve this technical debt, the study advocates for a clear separation of concerns by
+
+implementing the Strategy pattern as defined by the GoF. In their proposed architecture, the
+customer profile delegates the behaviour for obtaining a discount to an external object, rather
+than embedding the calculation in the core system. This allows the e-commerce platform to
+dynamically trigger execution after receiving the corresponding algorithm. As a result,
+
+different algorithms can be chosen depending on the specific customer context, and these
+
+algorithms can even be swapped at runtime as the user's profile or promotional eligibility
+evolves. Their work validates the feasibility of the Strategy pattern in calculating discounts
+
+seamlessly.
+
+
+1.4.3 Managing Overlapping Promotions and Modularity
+
+Charalampidou et. al (2017) present an analysis of the Decorator pattern's impact on software
+
+quality attributes, demonstrating that its effectiveness depends heavily on the context of its
+
+application. Using a theoretical model based on structural design metrics, the authors note
+that while static instances of the pattern can decrease system cohesion, applying the
+
+Decorator in contexts requiring dynamic, incremental extension significantly enhances
+
+modularity and extensibility. For an e-commerce platform like EZShop, where multiple
+overlapping promotions such as percentage discounts, fixed-amount vouchers, and seasonal
+
+rebates, must be applied simultaneously, the Decorator pattern offers an architectural
+
+solution. Rather than relying on various specialized subclasses to handle every possible
+discount combination, each promotion can be implemented as a concrete decorator that
+
+dynamically wraps a base price calculation at runtime. This strictly adheres to the
+
+Open-Closed Principle, allowing new discount types and ordered calculation chains to be
+integrated without modifying existing logic. However, the authors also warn of structural
+
+trade-offs: if the system is extended by adding concrete decorators that merely inherit
+
+functionalities without offering class-specific operations, design quality and understandability
+actually diminish. Consequently, these findings directly validate EZShop's strategy to use the
+
+Decorator pattern for stacking promotions, provided that the architectural application remains
+
+disciplined and avoids unnecessary over-decoration.
+
+
+1.5. Project and System Scope
+
+The system is designed as a web-based application to ensure high availability without
+
+requiring platform-specific installations. The frontend is built with a responsive web interface
+to support access from desktop and mobile browsers.
+1.5.1 In-Scope Capabilities
+
+The system is designed to handle the following:
+
+
+    ● Catalog and shopping cart management: The system will allow customers to
+
+       browse the e-commerce clothing catalog, view product details, and manage their
+       shopping cart (add, remove, and update item quantities) prior to checkout.
+
+    ● Checkout and discount processing: The system will allow users to apply multiple
+
+       types of promotions during the checkout phase. The system will dynamically calculate
+       complex pricing combinations, such as stacking a seasonal percentage sale with a
+
+       fixed-amount shipping voucher to generate an accurate final price. Credit card, online
+
+       banking and e-wallet are accepted as payment options.
+
+    ● Automated order processing and notifications: The system will manage the
+       lifecycle of a customer's order. Upon a successful checkout, the system will
+
+       automatically trigger real-time background processes to deduct purchased items from
+
+       the inventory and send automated order confirmation notifications to the customer.
+    ● Scalable promotional management: The system is designed to allow administrators
+
+       to easily integrate new discount schemes, marketing campaigns, or pricing rules in the
+
+       future without disrupting the existing core checkout functionalities.
+
+
+1.5.2 Out-of-Scope Capabilities
+
+To maintain a clear focus on implementing software design patterns, the following
+
+functionalities are out of the scope for this system:
+
+    ● Live payment gateway integration: The system will simulate payment processing
+
+       transactions. It will not integrate with live third-party financial APIs.
+    ● User authentication: The system assumes a “guest checkout” model, meaning that
+
+       customers will not be required to create an account to purchase items. User
+
+       registration and authentication are excluded from this system design.
+    ● Delivery and logistics tracking: Advanced fleet management, GPS tracking, and
+
+       integration with third-party courier services are excluded. Order status will simply
+
+       update to generic states internally.
+    ● Comprehensive Identity Management & RBAC: The public storefront operates
+
+       strictly on a frictionless "guest checkout" model; customer account creation and
+
+       profile  management    are excluded. For internal      staff, the integration of
+       enterprise-grade Identity Providers (IdPs), OAuth authorization servers, and complex
+
+       Role-Based Access Control (RBAC) are out of scope. The architecture relies on a
+       localized, lightweight access boundary to separate administrative domains from public
+
+       traffic, prioritizing backend pattern implementation over complex user provisioning.
+
+    ● Multi-currency processing and tax calculations: All transactions are assumed to be
+       processed in Ringgit Malaysia (RM). Dynamic tax calculation logic based on
+
+       geographic shipping regions is explicitly excluded.
+
+    ● Recommendation         engines:    Machine     learning   algorithms    for   product
+       recommendations based on user browsing history are beyond the scope of this
+
+       architectural design document.
+
+
+1.5.3 Business Rules
+
+
+1. Account and Platform Policies
+
+
+    ● B2C Retail Model: EZShop operates exclusively as a single-vendor retail platform. It
+       is not a multi-vendor marketplace; all inventory is owned and managed centrally by
+
+       EZShop Admins.
+
+    ● Guest Checkout: The platform operates strictly on a guest-checkout model. User
+
+       registration, account creation, and persistent login sessions are not required, and
+       customer details are tied uniquely to individual order instances.
+
+    ● Currency Used in Transactions: All financial transactions, base prices, and
+
+       fixed-amount discounts are calculated and processed exclusively in Ringgit Malaysia
+       (RM).
+
+
+2. Inventory and Shopping Cart Rules
+
+
+    ● Real-Time Stock Validation: A customer cannot add an item to the cart if the
+       requested quantity exceeds the physical stock available in the database. The system
+
+       will auto-correct the requested quantity to the maximum available stock.
+
+    ● Cart Abandonment: Shopping cart session data for unauthenticated guest users is
+       retained in the system cache for a maximum of 24 hours before being purged.
+
+    ● Checkout Inventory Lock: Inventory is verified a final time immediately before the
+
+       payment gateway is invoked. If concurrent user activity depletes the stock before
+
+       payment submission, the checkout process is aborted to prevent overselling.
+3. Promotional and Pricing Rules (The Pricing Engine)
+
+
+    ● Discount Value Constraints and Limits: Administrators cannot create a
+       percentage-based discount greater than 100%, nor can they set negative stock values
+
+       or negative base prices.
+
+    ● Promotional Stacking: Customers may stack global marketing campaigns (e.g.,
+
+       Seasonal Sales) with user-applied promotional vouchers (e.g., Shipping Discounts) on
+       a single order, facilitated by the Decorator pattern.
+
+    ● Order of Application: To maintain financial consistency, percentage-based discounts
+
+       must be applied to the cart subtotal before fixed-amount deductions (e.g., an RM 5.00
+       voucher) are subtracted.
+
+    ● Minimum Spend Threshold Checks: Certain promotional vouchers require the cart's
+
+       base subtotal to reach a specific minimum threshold. If the cart falls below this
+
+       threshold (due to item removal), the system automatically detaches the promotion
+       decorator from the checkout session.
+
+
+4. Payment and Post-Purchase Rules
+
+
+    ● Payment Methods Abstraction: The system must treat all payment methods (Credit
+       Card, Online Banking, E-Wallet) interchangeably. The core checkout process must not
+
+       contain provider-specific API logic.
+
+    ● Notification Isolation: Post-purchase notifications (like email receipts) and inventory
+
+       deductions must only execute if the payment gateway returns a "Success"
+       authorization code.
+
+    ● Fault Tolerance in Observers: If a non-critical secondary process (e.g., the Email
+
+       Dispatcher) throws an exception during post-purchase execution, it must be caught
+
+       locally and must not roll back the successful payment transaction or the inventory
+       deduction.
+2. System Overview
+
+
+
+2.1. Generic Use Cases
+This section introduces the system functionalities of EZShop.
+
+
+2.1.1 Actors Involved
+
+
+    1. Customer
+           -  The end-user interacting with the frontend interface. This actor is responsible
+
+              for navigating the catalog, building an order, and initiating the checkout
+
+              sequence.
+    2. Admin
+
+           -  The internal staff member responsible for the backend configuration of the
+
+              e-commerce platform, specifically managing catalog stock and defining active
+              promotional campaigns.
+
+    3. EZShop System (Backend Actor):
+           -  The automated backend infrastructure. This actor represents the core of the
+
+              architectural  design, responsible for dynamically calculating stacked
+
+              promotional pricing, simulating secure payment transactions, and broadcasting
+              state changes to relevant subsystems (Observer pattern).
+
+
+2.1.2 Use Cases by Actor
+
+
+The following use cases define the system's boundary, categorized by the primary actor that
+initiates them:
+
+
+2.1.2.1 Customer Use Cases
+
+
+Use Case: Browse Product Catalog
+
+
+ Use Case Name            Browse Product Catalog
+
+ Primary Actor            Customer
+
+ Description              Allows the customer to view, filter, and inspect clothing items
+                          available in the store.
+Precondition              The Customer accesses the EZShop frontend interface.
+
+Main Success                  1. The Customer navigates to the main storefront.
+
+Scenario                      2. The System queries the database and displays the active
+
+                                  clothing catalog.
+
+                              3. The Customer applies filters (e.g. size, category, price
+                                  range)
+
+                              4. The System updates the interface to display the filtered
+
+                                  results.
+
+                              5. The Customer selects a specific item to view its detailed
+                                  specifications.
+
+
+Alternate Scenarios       3a. Filter yields no results
+and Exceptions
+                              1. The system detects no matching items in the database.
+                              2. The system displays a “No Items Found” message and
+
+                                  provides a “Clear Filters” option.
+
+                              3. The customer clicks “Clear Filters”.
+
+                              4. The flow returns to Step 2 of the Main Success Scenario.
+
+
+                          5a. Product Details Unavailable
+
+                              1. The system is unable to retrieve the details for the product
+                                  the customer is viewing (for example, due to database
+
+                                  timeout or network changes)
+
+                              2. The system displays a “Product Information Unavailable.
+
+                                  Please try again” message.
+                              3. The customer clicks “Back to Catalog” to return to the
+
+                                  home page of the catalog.
+
+                              4. The flow returns to Step 4 of the Main Success Scenario.
+
+Non-functional                ● Performance: Catalog search and filter queries must
+
+requirements                      return results to the UI in under 1.5 seconds to prevent
+
+                                  user drop-off.
+
+                              ● Usability: The interface must be intuitive and strive for
+                                  maximum ease of use.
+ Postcondition             The Customer is viewing the details of a specific clothing item.
+
+
+
+
+
+Use Case: Manage Shopping Cart
+
+
+ Use Case Name             Manage Shopping Cart
+
+ Primary Actor             Customer
+
+ Description               Allows the customer to add items to their cart, adjust quantities,
+
+                           and remove items before checking out.
+
+
+ Precondition              The Customer is viewing their shopping cart or a specific
+                           product.
+
+
+ Main Success                  1. The Customer selects a quantity and clicks “Add to Cart”.
+ Scenario
+                               2. The System verifies active inventory stock for the
+                                  selected item.
+
+                               3. The system adds the item to the active session cart and
+
+                                  calculates the base subtotal.
+
+                               4. The Customer navigates to the cart to update item
+                                  quantities or remove items.
+
+                               5. The system dynamically updates the base subtotal to
+
+                                  reflect cart modifications.
+
+ Alternate Scenarios       2a. Insufficient stock remaining to meet customer’s purchase
+ and Exceptions
+                               1. The system detects the requested quantity exceeds the
+
+                                  available stock.
+                               2. The System displays an "Only [X] items left in stock"
+
+                                  warning.
+
+                               3. The System automatically adjusts the quantity input to the
+
+                                  maximum available stock.
+                               4. The customer reconfirms the new quantity and clicks
+
+                                  “Add to Cart” again.
+
+                               5. The flow returns to Step 3 of the Main Success Scenario.
+                           4a. Quantity reduced to 0
+
+                               1. The customer changes the quantity of an item in the cart
+
+                                  to zero.
+
+                               2. The system prompts the customer to confirm the removal
+                                  of the item.
+
+                               3. The customer confirms the item removal.
+
+                               4. The system deletes the CartItem object from the
+                                  ShoppingCart.
+
+                               5. The flow continues to Step 5 of the Main Success
+
+                                  Scenario.
+
+
+                           4b. Cart Abandonment
+
+                               1. The Customer closes their browser or exits the site.
+
+                               2. The system retains the cart session data in cache for 24
+
+                                  hours.
+                               3. The use case ends prematurely.
+
+
+ Non-functional                ● Reliability: Cart contents must persist across browser
+ requirements
+                                  refreshes and accidental tab closures using secure session
+                                  storage.
+
+                               ● Performance: Base subtotal recalculations must occur
+
+                                  instantly (under 300ms) upon quantity adjustment.
+
+ Postcondition             The cart accurately reflects the selected items and their base,
+
+                           undiscounted subtotal.
+
+
+
+
+
+Use Case: Initiate Checkout
+
+
+ Use Case Name             Initiate Checkout
+
+ Primary Actor             Customer
+
+ Description               Transitions the customer from the shopping cart to the final
+
+                           payment and shipping details phase.
+Precondition              The Customer has at least one valid item in their shopping cart.
+
+
+Main Success                  1. The Customer clicks the “Proceed to Checkout” button.
+Scenario
+                              2. The system locks the cart items and prompts the
+
+                                 Customer for shipping and contact details.
+                              3. The Customer inputs the required fulfillment information.
+
+                              4. The system navigates the Customer to the final order
+
+                                 review and payment stage.
+
+Alternate Scenarios       2a. Empty Cart Anomaly
+and Exceptions
+                              1. The system detects 0 items (cart was emptied in another
+
+                                 tab etc.)
+                              2. The system displays a “Your Cart is Empty” warning.
+
+                              3. The system redirects the customer to the home catalog.
+
+                              4. The use case ends prematurely.
+
+
+                          3a. Product Details Unavailable
+
+                              1. The system attempts to validate the customer’s input
+
+                                 (shipping address, contact information etc.)
+
+                              2. The system detects missing, incomplete or malformed
+                                 mandatory fields.
+
+                              3. The System highlights the specific fields in red and
+
+                                 disables progression.
+                              4. The Customer corrects the highlighted errors and
+
+                                 resubmits.
+
+                              5. The flow returns to Step 4 of the Main Success Scenario.
+
+
+                          3b. Customer Cancels Checkout
+
+                              1. The customer clicks a “Return to Cart” button.
+
+                              2. The system unlocks the cart items.
+                              3. The system redirects the customer back to the cart
+
+                                 interface.
+
+                              4. The Use Case ends prematurely.
+ Non-functional              ● Security: All shipping and contact data must be
+
+ requirements                    transmitted over secure HTTPS/TLS encrypted channels.
+
+                             ● Usability: Form validation must occur client-side in
+
+                                 real-time to provide immediate feedback before server
+                                 submission.
+
+
+ Postcondition            The Customer is at the final order review interface, ready to
+
+                          apply promotions or submit payment.
+
+
+
+
+
+Use Case: Apply Promotional Codes
+
+
+ Use Case Name            Apply Promotional Codes
+
+ Primary Actor            Customer
+
+ Description              Enables the customer to input a code to receive discounts on their
+
+                          current order subtotal via the pricing engine.
+
+ Precondition             The Customer is at the final order review interface.
+
+
+ Main Success                1. The Customer inputs a specific promotional voucher code
+ Scenario
+                                 into the input field.
+                             2. The System queries the active promotions database to
+
+                                 validate the code's existence, expiry, and eligibility.
+
+                             3. The System triggers the backend pricing engine to
+
+                                 recalculate the cart.
+                             4. The System updates the UI to show the accepted promo
+
+                                 code and the new discounted total.
+
+
+
+ Alternate Scenarios      1a. Code is Removed
+                             1. The customer clicks “Remove Promo” next to an already
+
+                                 applied code.
+
+                             2. The system removes the decorator from the pricing chain.
+
+                             3. The system triggers the pricing engine to revert to the
+                                 previous threshold.
+
+                             4. The flow returns to Step 2 of the Main Success Scenario.
+
+
+                          2a. Invalid or Expired Code/Voucher/Coupon
+
+                             1. The system detects the code does not exist or has expired.
+
+                             2. The System displays a “Code/Voucher/Coupon is Invalid”
+                                 or “Code/Voucher/Coupon has expired” error message.
+
+                             3. The system maintains the previous undiscounted subtotal.
+
+                             4. The customer enters a new promotional code or clears the
+
+                                 input.
+                             5. The flow returns to Step 1 of the Main Success Scenario.
+
+
+ Non-functional              ● Performance: Code validation and decorator chain
+ requirements
+                                 recalculation must execute in under 1.0 second to prevent
+                                 checkout abandonment.
+
+                             ● Data Integrity: Database queries for promo codes must
+
+                                 be read-only to prevent accidental modification during
+                                 validation.
+
+
+ Postcondition            A valid promotional code is attached to the Customer's current
+
+                          checkout session.
+
+
+
+
+
+2.1.2.2 Admin Use Cases
+
+Use Case: Manage Product Inventory
+
+
+
+ Use Case Name            Manage Product Inventory
+
+ Primary Actor            Admin
+
+ Description              Allows the admin to update product details or add new stock into
+                          the system.
+
+
+ Precondition             The Admin is authenticated and logged in.
+Main Success                  1. The Admin navigates to the Inventory module.
+
+Scenario                      2. The Admin selects an existing clothing line or creates a
+
+                                 new entry.
+
+                              3. The Admin inputs updated stock values, sizes, or pricing.
+                              4. The system validates the data and commits the update to
+
+                                 the database.
+
+
+Alternate Scenarios       2a. Product Not Found
+                              1. The Admin searches for a specific product that does not
+
+                                 exist.
+
+                              2. The system displays a “Item not found” message.
+
+                              3. The Admin initiates the "Create New Entry" flow.
+                              4. The flow continues to Step 3 of the Main Success
+
+                                 Scenario.
+
+
+                          3a. Invalid or Expired Code/Voucher/Coupon
+
+                              1. The admin enters invalid product details (e.g. negative
+
+                                 value for stock and price).
+
+                              2. The system validation fails.
+                              3. The system displays a “Invalid Product Details” error and
+
+                                 blocks the database commit.
+
+                              4. The admin corrects the invalid data.
+                              5. The flow continues to Step 4 of the Main Success
+
+                                 Scenario.
+
+
+Non-functional                ● Security: Strict Role-Based Access Control (RBAC)
+requirements
+                                 must restrict this module to authorized administrator
+                                 sessions only.
+
+                              ● Auditability: All stock changes must log the Admin ID
+
+                                 and timestamp for backend auditing purposes.
+
+Postcondition             The product catalog is updated and immediately reflects the new
+
+                          inventory state to browsing Customers.
+Use Case: Configure Promotional Campaigns
+
+
+ Use Case Name            Configure Promotional Campaigns
+
+ Primary Actor            Admin
+
+ Description              Provides the admin with tools to set up, schedule, and map new
+
+                          discount rules to the system's Strategy and Decorator patterns.
+
+
+ Precondition             The Admin is authenticated and logged in.
+
+ Main Success                 1. The Admin navigates to the Promotions management
+ Scenario
+                                  interface.
+
+                              2. The Admin defines the parameters of a new marketing
+                                  campaign (e.g., "Holiday Sale: 20% Off" or "FREESHIP
+
+                                  Voucher").
+
+                              3. The system saves the configuration.
+
+                              4. The promotions are dynamically applied to products
+                                  depending on the parameters set by the Admin.
+
+
+ Alternate Scenarios      2a. Logical Date Conflict
+
+                              1. The Admin attempts to set an End Date that occurs before
+                                  the Start Date.
+
+                              2. The system validation fails and highlights the date fields.
+
+                              3. The Admin adjusts the dates to a valid chronological
+
+                                  range.
+                              4. The flow continues to Step 3 of the Main Success
+
+                                  Scenario.
+
+
+
+                          2b. Invalid Discount Value
+                              1. The Admin inputs a percentage discount greater than
+
+                                  100%.
+
+                              2. The system validation blocks the entry and displays an
+                                  “Invalid Discount Value” error.
+
+                              3. The Admin corrects the percentage value.
+
+                              4. The flow continues to Step 3 of the Main Success
+                                  Scenario.
+
+
+ Non-functional                ● Security: Protection against SQL injection is required on
+ requirements
+                                  all text-input fields for campaign names/codes.
+                               ● Maintainability: The mapping of campaigns to
+
+                                  Decorator/Strategy patterns must be dynamic, requiring
+
+                                  no server reboots or code recompilation.
+
+ Postcondition             The new promotional rule is active and available for the System
+
+                           to apply.
+
+
+
+
+
+2.1.2.3 EZShop System Use Cases
+
+
+Use Case: Calculate Dynamic Pricing
+
+
+ Use Case Name             Calculate Dynamic Pricing
+
+ Primary Actor             EZShop System
+
+ Description               The internal pricing engine mechanism that dynamically applies
+
+                           base prices and stacks promotional decorators to calculate the
+                           final total.
+
+
+ Precondition              The Admin is authenticated and logged in.
+
+
+ Main Success                  1. The system retrieves the base subtotal of the Customer’s
+ Scenario                         shopping cart.
+
+                               2. The system identifies all active global promotions and
+
+                                  user-applied promotional codes or discounts.
+                               3. The system instantiates the specific calculation algorithms
+
+                                  for the promotions using the Strategy pattern.
+
+                               4. The system dynamically wraps the cart total using the
+                                  Decorator pattern, passing the total through each active
+
+                                  promotion sequentially to allow for stacking.
+                              5. The system returns the accurately calculated final price to
+
+                                 the frontend interface.
+
+
+
+ Alternate Scenarios      2a. No Promotions Active (Base Case)
+
+
+                              1. The System identifies 0 applied codes and 0 active global
+                                 sales.
+
+                              2. The system completely bypasses Decorator and Strategy
+
+                                 instantiation (skips Steps 3 and 4).
+
+                              3. The System directly queries the BaseCartPricing
+                                 component.
+
+                              4. The flow skips to Step 5, returning the undiscounted
+
+                                 subtotal.
+
+ Non-functional               ● Performance: The recursive decorator chain must
+
+ requirements                    execute entirely in memory in under 500ms.
+
+                              ● Extensibility: The pricing architecture must allow new
+
+                                 decorators/strategies to be injected at runtime without
+                                 modifying the CheckoutContext. This adheres to the
+
+                                 Open-Closed Principle (OCP).
+
+
+ Postcondition            The checkout interface displays the final price, with all stacked
+                          discounts mathematically resolved and accurately reflected.
+
+
+
+
+
+Use Case: Simulate Payment Processing
+
+
+
+ Use Case Name            Simulate Payment Processing
+
+ Primary Actor            EZShop System
+
+ Description              Routes the final order payload to a mock payment gateway using
+                          the Strategy pattern to simulate authorization.
+
+
+ Precondition             The Customer confirms the order total, the System verifies the
+                          final inventory availability, and the Customer submits simulated
+
+                          payment details.
+
+
+Main Success                  1. The system locks the final checkout total to prevent state
+Scenario
+                                 alterations.
+                              2. The System routes the transaction details to the internal
+
+                                 mock payment gateway.
+
+                              3. The mocked gateway simulates processing time and
+                                 returns a standard authorization success code.
+
+                              4. The System generates a unique Order ID and saves the
+
+                                 finalized transaction to the database.
+
+
+Alternate Scenarios       1a. Final Inventory Verification Failure
+
+                              1. The System checks the stock one final time before
+
+                                 charging the customer.
+
+                              2. The System detects the requested stock was depleted by a
+                                 concurrent user (another customer).
+
+                              3. The system aborts the checkout process and releases all
+
+                                 cart locks.
+
+                              4. The System alerts the Customer: "An item in your cart is
+                                 no longer available."
+
+                              5. The Customer is redirected back to the cart. The Use Case
+
+                                 ends.
+
+
+Non-functional                ● Reliability: The system must implement a strict 5-second
+requirements
+                                 timeout for all external gateway communications.
+
+                              ● Decoupling: The system must depend exclusively on the
+
+                                 PaymentStrategy abstraction, ensuring no hardcoded
+                                 dependencies on specific gateway providers. This adheres
+
+                                 to the Dependency Inversion Principle (DIP).
+
+
+Postcondition             The order status is updated to “Paid”.
+Use Case: Send Order Notifications
+
+
+ Use Case Name             Send Order Notifications
+
+ Primary Actor             EZShop System
+
+ Description               Executes post-purchase background tasks (inventory deduction,
+
+                           email receipt) triggered by a successful payment using the
+
+                           Observer pattern.
+
+ Precondition              The payment status was “Successful”.
+
+
+ Main Success                  1. The core Order Processing module (acting as the Subject)
+ Scenario
+                                  updates the internal order state to "Paid.".
+                               2. The Subject automatically broadcasts a notification event
+
+                                  to all registered Observers.
+
+                               3. The Observers independently execute their specific logic,
+
+                                  the inventory module deducts the purchased stock, and
+                                  the email module formats and dispatches the confirmation
+
+                                  receipt.
+
+
+
+ Alternate Scenarios       3a. Observer Exception Isolation
+                               1. The EmailNotificationObserver encounters a formatting
+
+                                  error and throws an exception while trying to send the
+
+                                  receipt.
+
+                               2. The Observer Pattern's local exception handling catches
+                                  the error silently.
+
+                               3. The system logs the email failure for manual admin
+
+                                  review.
+
+                               4. The exception is isolated, ensuring the
+                                  InventoryObserver still executes successfully
+
+                                  without rolling back the entire paid order.
+
+                               5. The Use case concludes successfully despite the localized
+
+                                  email failure.
+
+ Non-functional                ● Performance: Observer methods must execute on
+requirements                     background threads to ensure the customer receives their
+
+                                 UI confirmation instantly without waiting for the email to
+
+                                 send.
+
+
+Postcondition             The Customer receives a confirmation receipt, the backend
+                          inventory is accurately reduced, and the order is queued for
+
+                          simulated fulfillment.
+2.1.3 Use Case Diagram
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                              Figure 2.1: Use Case Diagram
+
+
+2.2. Class Diagram
+
+
+The EZShop architecture is divided into four main subsystems. This modular design ensures
+the system is easy to maintain and strictly follows object-oriented principles.
+
+
+    ● Core Domain: This holds the basic data models. A ShoppingCart contains multiple
+       CartItems. Each CartItem links to a Product to check its price and available stock.
+
+       Once a transaction is finalized, an Order is created to store the final total and status.
+    ● Pricing Engine (Decorator & Strategy Patterns): This handles the discount
+
+       calculations. First, BaseCartPricing gets the raw cart subtotal. To apply promotions, a
+       PromotionDecorator "wraps" that total. The actual math (like 20% off or RM 5 off) is
+
+       handed off to the DiscountStrategy interface. This setup allows the system to stack
+
+       multiple different discounts on top of each other without relying on massive, messy
+
+       if/else statements.
+    ● Payment Processing (Strategy Pattern): This handles the checkout phase. The
+
+       CheckoutContext delegates the transaction to a PaymentStrategy interface. Because
+
+       the system just looks at the interface, it doesn't care whether the user is paying via
+       CreditCardPayment, EWalletPayment, or OnlineBankingPayment. This makes adding
+
+       new payment methods in the future seamless.
+
+    ● Order Notifications (Observer Pattern): This manages the background tasks after a
+
+       successful payment. Once the OrderProcessor (the Subject) marks an order as "Paid",
+       it automatically notifies its list of Observers. The InventoryObserver steps in to
+
+       deduct the purchased stock, and the EmailNotificationObserver sends the customer
+
+       their receipt. This keeps the checkout process fast and entirely separated from
+       post-purchase tasks.
+
+
+The class diagram is depicted in Figure 2.2 below.
+                         Figure 2.2: Class Diagram
+
+
+2.3. ERD (Entity Relationship Diagram)
+
+2.3.1 ERD
+
+The Entity Relationship Diagram (ERD) for the EZShop system is as shown in Figure 2.3.
+                                      Figure 2.3: ERD
+
+
+The ERD outlines the structure of EZShop, accommodating users, products, cart
+
+functionality, payments, and order. The model emphasizes role specialization and ensures
+
+normalized relational structure.
+
+
+
+
+2.3.2 Entity Relationship Diagram Summary
+The table below show the summary of the relationship between entities in EZShop
+
+
+
+ Entity A            Entity B             relationship        description
+
+ CUSTOMER            SHOPPING_CART        One-to-Many         A customer may place zero or
+                                                              more shopping carts over time.
+
+ SHOPPING_CART       CART_ITEM            One-to-Many         A Shopping cart must contain at
+                                                              least one item or may contain
+                                                              many items.
+
+ CART_ITEM           PRODUCT              Many-to-One         Many cart items might refer to
+                                                              the same product.
+ CUSTOMER             ORDER               One-to-One           A customer may place one order
+                                                               at a time. A Customer record is
+                                                               instantiated upon every purchase
+                                                               due to the guest checkout model
+                                                               used in this system.
+
+ ORDER                ORDER_ITEM          One-to-Many          An order must contain at least
+                                                               one order item
+
+
+ ORDER_ITEM           PRODUCT             Many-to-One          Many product orders may refer to
+                                                               the same product.
+
+ ORDER                PROMOTION           Many-to-Many            -   An order may have zero
+                                                                      or more promotion.
+                                                                  -   A promotion may be
+                                                                      used across many orders.
+
+ ORDER                PAYMENT             One-to-One           Each finalized order is settled by
+                                                               only one payment record.
+
+
+
+
+2.4. Object Diagrams
+
+
+2.4.1 Base Case Checkout (No Promotions Applied)
+
+This diagram shows a customer actively building their cart before any payment logic
+
+happens. It highlights the basic data structure of the system: one ShoppingCart safely holding
+
+multiple CartItems, which each link to a specific Product in the catalog. This proves that the
+
+system can successfully track quantities and base prices before the checkout process even
+begins.
+                     Figure 2.4: Base Case Checkout Object Diagram
+
+
+2.4.2 Pre-Checkout
+
+This diagram shows exactly what happens when a customer checks out without using any
+promo codes or qualifying for sales. It shows that the architecture does not break if discount
+
+wrappers are missing. Instead, the CheckoutContext simply bypasses the decorators, grabs the
+
+raw subtotal directly from the BaseCartPricing component, and successfully processes a
+standard credit card payment.
+                          Figure 2.5: Pre-Checkout Object Diagram
+
+2.4.3 Actual Checkout (Multiple Promotions/Discounts)
+
+This diagram shows the system handling a complicated order and proves your design patterns
+
+work perfectly under pressure. It visually shows how a single cart is wrapped by two different
+discounts, for example, a holiday percentage sale and a fixed-amount shipping voucher, to
+
+calculate the final price without messy if/else code. Once the discounted total is paid via an
+
+e-wallet, it immediately triggers the background Observer system to update the inventory and
+
+email the customer their receipt.
+             Figure 2.6: Actual Checkout (Multiple Promotions) Object Diagram
+
+
+2.5 Sequence Diagrams
+
+
+2.5.1 Browse Product Catalog (Customer)
+This sequence diagram illustrates the initial data retrieval process when a customer interacts
+
+with the storefront. It highlights the synchronous flow where the frontend interface captures
+
+the customer's filter preferences and forwards them to the Product Catalog module, which
+subsequently queries the database to return a filtered, up-to-date representation of available
+
+active inventory for the customer to inspect.
+
+
+    1. The Customer navigates to the store and selects specific filters (e.g., size, category).
+
+    2. The UI sends a request to the backend Product Catalog module with the selected
+        filters.
+
+    3. The Catalog module queries the Database for active inventory matching the criteria.
+
+    4. The Database returns the raw product data.
+    5. The Catalog formats the data and sends it back to the UI.
+
+    6. The UI updates the screen to show the customer the filtered items.
+    7. The Customer clicks on a specific clothing item.
+
+    8. The UI renders the detailed view of that specific product.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Figure 2.7: Browse Product Catalog Sequence Diagram
+
+
+
+2.5.2 Manage Shopping Cart (Customer)
+This diagram details the operational flow of adding an item to the shopping cart, emphasizing
+
+the system's real-time stock validation mechanism. Before a CartItem object is instantiated,
+
+the ShoppingCart actively queries the product database to prevent the overallocation of
+
+inventory; once validated, the cart mathematically updates its raw base subtotal and pushes
+the refreshed state back to the customer's user interface.
+
+
+
+    1. The Customer chooses an amount and attempts to add a product to their cart.
+    2. The UI passes the request to the active ShoppingCart session.
+    3. The Cart checks the Product entity to ensure physical stock exists.
+
+    4. The system confirms the stock is available.
+    5. The Cart creates a new CartItem object linking the product and the requested quantity.
+
+    6. The Cart mathematically updates its raw base subtotal.
+
+    7. The Cart confirms the addition and sends the new subtotal to the UI.
+    8. The UI updates the cart icon and displays the new undiscounted total to the Customer.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    Figure 2.8: Manage Shopping Cart Sequence Diagram
+
+
+
+
+2.5.3 Initiate Checkout (Customer)
+
+This sequence maps the transition from the browsing phase to the formal purchasing phase. It
+
+demonstrates how the CheckoutContext assumes control by first locking the cart's state to
+prevent further item modifications, then securely prompting for and validating the customer's
+
+mandatory fulfillment data (shipping and contact details) before authorizing the transition to
+
+the final order review interface.
+1. The Customer decides to buy their items and clicks checkout.
+2. The UI signals the CheckoutContext to lock the cart to prevent further items from
+
+    being added.
+
+3. The Context verifies that the cart is not empty before proceeding.
+
+4. The system prompts the user to enter their physical shipping address and email.
+5. The Customer types in their fulfillment information.
+
+6. The UI passes this data to the Context, which validates and temporarily stores it.
+
+7. The Context authorizes the transition to the final checkout phase.
+8. The UI displays the final order review screen where promos and payments can be
+
+    applied.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Figure 2.9: Initiate Checkout Sequence Diagram
+2.5.4 Apply Promotional Codes (Customer)
+
+This diagram outlines the validation and application flow of user-submitted discount codes. It
+illustrates the CheckoutContext intercepting the input string, querying the Promotions
+
+Database to verify the code's active status and eligibility, and subsequently triggering the
+
+internal dynamic pricing engine to mathematically recalculate the cart's subtotal before
+displaying the accepted discount on the frontend.
+
+
+
+    1. The Customer types a code (e.g., "FREESHIPPING") and attempts to apply it.
+
+    2. The UI sends the string to the CheckoutContext.
+    3. The Context queries the Promotions Database to check if the code exists and hasn't
+
+       expired.
+
+    4. The Database confirms the code is valid and returns its parameters (e.g., type of
+       discount).
+
+    5. The Context triggers the internal dynamic pricing engine to recalculate the cart.
+
+    6. The Context returns the newly calculated final price.
+    7. The UI updates to visually show the accepted code and the reduced total to the
+
+       Customer.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                 Figure 2.10: Apply Promotional Codes Sequence Diagram
+2.5.5 Manage Product Inventory (Admin)
+
+This sequence captures the backend administrative workflow for maintaining physical stock
+
+levels. It shows a straightforward, secure interaction where the Admin submits new inventory
+
+figures through the dashboard, prompting the internal Inventory Module to validate the data
+(ensuring positive integers) before committing the SQL update to the primary database and
+
+returning a success confirmation.
+
+
+    1. The Admin types new stock quantities or changes a base price in their dashboard.
+
+    2. The Dashboard sends the update request to the backend Inventory Module.
+
+    3. The Module validates the input to ensure prices and stock are positive numbers.
+    4. The Module sends the SQL commit to the primary Database.
+
+    5. The Database successfully updates the records and replies with a success code.
+
+    6. The Module passes the success confirmation back to the frontend.
+    7. The Dashboard alerts the Admin that the stock has been successfully updated.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                 Figure 2.11: Manage Product Inventory Sequence Diagram
+2.5.6 Configure Promotional Campaigns (Admin)
+
+This diagram illustrates the administrative process of defining new marketing rules and maps
+
+directly to the system's structural design patterns. It highlights how the Promotions Module
+
+receives raw campaign parameters (like dates and discount values), validates their logical
+consistency, and maps them to the appropriate underlying DiscountStrategy and
+
+PromotionDecorator classes before saving the active rule to the database.
+
+
+    1. The Admin inputs details for a new sale (e.g., 20% off, start/end dates).
+
+    2. The Dashboard sends these parameters to the backend Promotions Module.
+
+    3. The Module verifies the dates are chronological and the discount makes mathematical
+       sense.
+
+    4. The Module maps the parameters to the system's Strategy and Decorator classes so it
+
+       can be executed later.
+    5. The Module saves the active rule to the Database.
+
+    6. The Database confirms the save.
+
+    7. The Module alerts the frontend that the campaign is now live.
+
+    8. The Dashboard updates to show the Admin their newly active promotion.
+             Figure 2.12: Configure Promotional Campaigns Sequence Diagram
+
+
+2.5.7 Calculate Dynamic Pricing (EZShop System)
+
+This diagram represents the most critical architectural workflow of the EZShop system,
+
+showcasing the combined execution of the Decorator and Strategy patterns. It visualizes the
+CheckoutContext dynamically assembling a pricing chain by wrapping the BaseCartPricing
+
+component inside a PromotionDecorator, which then securely delegates the actual
+
+mathematical calculation to a specific DiscountStrategy to resolve the final discounted price
+without relying on hardcoded conditional statements.
+
+
+    1. The system triggers the pricing engine internally during checkout.
+
+    2. The Context dynamically wraps the base cart inside a PromotionDecorator, injecting
+
+        the specific DiscountStrategy.
+    3. The Context requests the final total from the outermost Decorator wrapper.
+
+    4. The Decorator asks the inner BaseCartPricing for its total.
+
+    5. The Base component calculates and returns the raw, undiscounted subtotal.
+
+    6. The Decorator delegates that raw subtotal to the injected Strategy algorithm.
+    7. The Strategy executes the math (e.g., subtracting 20%) and returns the new amount.
+
+    8. The Decorator passes the finalized price back to the Context.
+
+    9. The Context returns the final price to be displayed to the user.
+                 Figure 2.13: Calculate Dynamic Pricing Sequence Diagram
+
+
+
+
+2.5.8 Simulate Payment Processing (EZShop System)
+This sequence details the transaction execution phase, highlighting the application of the
+
+Strategy pattern to decouple external gateway dependencies. It demonstrates the
+
+CheckoutContext locking the final order total and delegating the transaction payload to an
+injected PaymentStrategy, which mocks the network delay of an authorization request before
+
+returning a success code, saving the finalized order to the database, and triggering the
+
+notification subsystem.
+
+
+    1. The Customer clicks "Pay Now" and submits their mocked payment data.
+    2. The CheckoutContext freezes the cart total so it cannot change during processing.
+
+    3. The Context delegates the transaction to the specific PaymentStrategy (e.g.,
+
+        E-Wallet).
+    4. The Strategy simulates a brief network delay to mimic a real bank API.
+
+    5. The Strategy returns a "Success" authorization boolean back to the Context.
+
+    6. The Context creates an Order record in the Database.
+
+    7. The Database assigns a unique Order ID and returns it.
+    8. The Context triggers the Observer pattern to handle the background tasks.
+
+    9. The UI shows the customer a loading/success state.
+                Figure 2.14: Simulate Payment Processing Sequence Diagram
+
+
+
+2.5.9 Send Order Notifications (EZShop System)
+
+This diagram illustrates the asynchronous post-purchase workflow governed by the Observer
+
+pattern. It maps how the core OrderProcessor acts as the Subject, officially updating the order
+
+status to "Paid" and subsequently invoking the update() method on all registered observers,
+allowing the InventoryObserver and EmailObserver to independently execute their respective
+
+stock deduction and receipt dispatching tasks without tightly coupling them to the main
+
+checkout flow.
+
+
+    1. The successful payment triggers the OrderProcessor (the Subject).
+
+    2. The Processor officially changes the order's internal status to "Paid".
+    3. The Processor begins iterating through its list of attached Observers.
+4. The Processor calls the update() method on the InventoryObserver.
+
+5. The Inventory observer independently deducts the exact purchased items from the
+    stock.
+
+6. It returns control to the Processor.
+
+7. The Processor calls the update() method on the EmailObserver.
+
+8. The Email observer formats a text-based receipt and dispatches it to the customer.
+9. It returns control to the Processor.
+
+10. The background processing gracefully completes, allowing the frontend to show the
+
+    final receipt page.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              Figure 2.15: Send Order Notifications Sequence Diagram
+3. Requirements
+
+
+3.1. Software Design Concepts and Design Principles
+
+The system architecture of EZShop has used software design concepts and adheres to SOLID
+
+principles.
+
+
+3.1.1 Software Design Concepts applied
+
+Modularity
+
+
+Definition:
+
+Modularity is the practice of breaking large, complex systems into smaller, independent, and
+interchangeable components called modules. Each of the modules are designed to perform a
+
+specific function, and can be tested and maintained independently.
+
+
+How is it applied into EZShop:
+EZShop has been separated into distinct, manageable parts, which is Core Domain, Pricing
+
+Engine, Payment Processing, and Order Notifications. By applying this concept, it helps to
+avoid having a complex structure and allow developers to maintain each subsystem
+
+subsequently. For example, if a request is made for a massive haul of the promotional
+
+campaigns, the developer can modify the Pricing Engine module safely without risking any
+disruption to the Payment Processing or core Domain modules.
+
+
+
+Functional Independence
+
+
+Definition:
+
+Functional independence is a design principle where modules and components are designed
+to perform a single and specific task, and minimize the interaction with other parts of the
+
+system.
+
+
+How is it applied in EZShop:
+
+By implementing the Observer pattern, the checkout module remains decoupled from
+post-purchase tasks. When an order is made, the OrderProcessor will just perform its work by
+
+updating the status to “paid”. Other than that, other modules like InventoryObserver are
+highly cohesive, performing singular and focus tasks without relying on the internal workings
+
+of the other systems. Because of its functional independence, an error formatting the receipt
+inside the EmailNotificationObserver will never cause the inventory deduction to fail.
+
+
+Encapsulation
+
+
+Definition:
+
+Encapsulation means that modules should be specified and designed so that the information
+
+,such as the algorithm and data, contained within a module is inaccessible to other modules
+that had no need for such information.
+
+
+
+How is it applied in EZShop:
+
+Encapsulation is implemented in EZShop to hide complex algorithms from modules that do
+not require them. The API logic that requires communication with external payment
+
+gateways (like banks and e-wallets) is encapsulated within PaymentStrategy classes. The
+
+main CheckoutContext is shielded from these external details. This prevents sensitive
+payments logic from leaking into the core application and isolates API-related errors.
+
+
+
+
+3.1.2 SOLID Design Principles applied
+
+
+Single Responsibility Principle (SRP)
+
+
+SRP dictates that a class should have a single, well-defined responsibility. In EZShop, the
+EmailNotificationObeserver handles only customer contact logic, ensuring that updates to the
+
+email formatting cannot break the inventory deduction system.
+
+
+Without SRP:
+
+       As can be seen in the code below, the functions responsible for stock deduction and
+
+       email notification are all in the same class.
+       //   VIOLATION: One class with two unrelated responsibilities
+       class OrderCompletionHandler {
+
+            public void handleOrderCompletion(String orderId, double
+       finalTotal, String status) {
+
+
+                 System.out.println("Deducting stock for order: " +
+       orderId);
+              System.out.println("Sending receipt for: " + orderId);
+              System.out.printf("Total: RM %.2f%n", finalTotal);
+
+          }
+      }
+
+
+
+
+SRP applied:
+
+      As can be seen in the code below, the stock deduction and email notification has now
+
+      been divided into two classes which is InventoryObserver for stock deduction and
+
+      EmailNotificationObserver for email notification function. By separating these two
+
+      into different classes, changing the email receipt format will only need to modify
+
+      EmailNotificationObserver. The Inventory deduction logic will be completely
+
+      unaffected and eliminate regression risk between both unrelated functions.
+      // SRP: Each observer class has one, and only one,
+
+      responsibility.
+      class InventoryObserver implements IOrderObserver {
+
+          public void update(String orderId, double finalTotal, String
+      status) {
+
+              System.out.println("[InventoryObserver] Processing stock
+      deduction");
+
+              System.out.println(" Order ID : " + orderId);
+              System.out.println(" Status     : " + status);
+
+              System.out.println("[InventoryObserver] Stock deduction
+      complete.");
+
+          }
+      }
+
+
+      class EmailNotificationObserver implements IOrderObserver {
+
+          public void update(String orderId, double finalTotal, String
+      status) {
+
+              System.out.println("[EmailNotificationObserver]
+      Dispatching receipt...");
+
+              System.out.printf(" Order ID      : %-35s%n", orderId);
+              System.out.printf(" Status        : %-35s%n", status);
+
+              System.out.printf(" Final Total : RM %-32.2f%n",
+      finalTotal);
+
+              System.out.println("[EmailNotificationObserver] Receipt
+      dispatched." );
+
+          }
+      }
+Open/Closed Principle (OCP)
+
+
+OCP ensures that software entities should be open for extension but closed for modification.
+
+In EZShop, the Pricing Engine utilizes the Decorator Pattern. For example, when a new
+campaign    is  launched,  developers   can  inject     a  new    concrete  decorator
+
+(MembershipTierDecorator) without altering the existing BaseCartPricing code and eliminate
+
+the risk of bugs.
+
+   -   Without applying OCP:
+
+       As can be seen in the code, if a new promotion needs to be added, the class is required
+
+       to be edited.
+       //   VIOLATION: Every new promotion forces editing this class
+
+       class PricingEngine {
+            public double calculateTotal(double subtotal, String
+       promoType) {
+
+                if (promoType.equals("HOLIDAY")) {
+                     return subtotal * 0.80; // 20% off
+
+                } else if (promoType.equals("SHIPPING")) {
+                     return subtotal - 5.00; // RM 5.00 off
+                }
+
+                return subtotal;
+            }
+
+       }
+
+
+   -   After applying OCP:
+
+       As can be seen in the codeMembershipTierDecoratois added as a new class without
+       modifying the existing claMembershipTierDecoratois introduced as a new campaign
+
+       requirement by extending thPromotionDecoratoonly.
+
+       // OCP: Each new promotion is a new class — existing classes
+       never modified.
+
+
+       interface IPricingComponent {
+            double calculateTotal();
+
+       }
+
+
+       // OCP: Closed for modification — this class never changes
+       class BaseCartPricing implements IPricingComponent {
+
+            private double cartSubtotal;
+            public BaseCartPricing(double cartSubtotal) {
+        this.cartSubtotal = cartSubtotal;
+    }
+
+    @Override
+    public double calculateTotal() {
+
+        System.out.printf(" [BaseCartPricing] Raw subtotal : RM
+%.2f%n", cartSubtotal);
+
+        return cartSubtotal;
+    }
+
+}
+
+
+// OCP: HolidaySaleDecorator — closed for modification
+
+class HolidaySaleDecorator extends PromotionDecorator {
+    private static final double DISCOUNT_PERCENTAGE = 0.20;
+
+    public HolidaySaleDecorator(IPricingComponent
+wrappedComponent) {
+
+        super(wrappedComponent);
+    }
+
+    @Override
+    public double calculateTotal() {
+
+        double before = wrappedComponent.calculateTotal();
+        double after   = before * (1.0 - DISCOUNT_PERCENTAGE);
+
+        System.out.printf(" [HolidaySaleDecorator] 20%% off : RM
+%.2f --> RM %.2f%n", before, after);
+
+        return after;
+    }
+
+}
+
+
+// OCP: MembershipTierDecorator — new campaign added by extension
+
+only.
+// BaseCartPricing and HolidaySaleDecorator are completely
+
+untouched.
+class MembershipTierDecorator extends PromotionDecorator {
+
+    private final double membershipDiscountPercentage;
+    public MembershipTierDecorator(IPricingComponent
+
+wrappedComponent, double membershipDiscountPercentage) {
+        super(wrappedComponent);
+
+        this.membershipDiscountPercentage =
+membershipDiscountPercentage;
+
+    }
+    @Override
+
+    public double calculateTotal() {
+
+        double before = wrappedComponent.calculateTotal();
+              double after   = before * (1.0 -
+
+      membershipDiscountPercentage);
+              System.out.printf(" [MembershipTierDecorator] %.0f%% off
+
+      : RM %.2f --> RM %.2f%n", membershipDiscountPercentage * 100,
+      before, after);
+
+              return after;
+          }
+      }
+
+
+      // Entry point — stacking all three promotions without modifying
+
+      any existing class
+      public class OCPDemo {
+
+          public static void main(String[] args) {
+              IPricingComponent engine = new ShippingVoucherDecorator(
+
+                                               new HolidaySaleDecorator(
+                                                   new
+
+      MembershipTierDecorator(
+                                                       new
+
+      BaseCartPricing(80.00), 0.10
+                                                   )));
+              double finalTotal = engine.calculateTotal();
+
+              System.out.printf("%nFinal Total: RM %.2f%n",
+      finalTotal);
+
+          }
+      }
+
+
+
+
+
+Liskov Substitution Principle (LSP)
+
+
+The Liskov Substitution Principle states that objects of a subclass must be substitutable for
+
+their superclass without altering the correctness of the program. Any concrete implementation
+
+injected into a context must honor the expected contract. In the payment processing module,
+
+every concrete payment method (such as EWallet and OnlineBanking) guarantees it will
+honor the contract of the PaymentStrategy interface.This ensures that the main checkout
+
+context can safely swap payment types without crashing.
+
+
+
+   -  Before LSP:
+
+      As can be seen in the code, BrokenPayment silently returns false, violating the
+
+      expected contract where a completed process should authorize the payment.
+   // --- BEFORE: LSP VIOLATION ---
+
+   // BrokenPayment silently returns false, violating the expected
+   contract
+
+   // where a completed process should authorize the payment.
+   class BrokenPayment implements PaymentStrategy {
+
+       @Override
+       public boolean processPayment(double amount) {
+
+           System.out.println("Pretending to pay RM " + amount);
+           return false; // Always fails — silently breaks
+
+   CheckoutContext logic
+       }
+
+   }
+
+
+-  After applying LSP:
+
+   As can be seen in the code, after LSP is applied, EWalletStrategy and
+
+   OnlineBankingStrategy can now be safely interchangeable.
+
+   // --- AFTER: LSP APPLIED ---
+   // All strategies honor the exact same contract, making them
+
+   safely interchangeable.
+
+
+   class EWalletStrategy implements PaymentStrategy {
+       @Override
+
+       public boolean processPayment(double amount) {
+           System.out.println("Processing e-wallet payment of $" +
+
+   amount);
+           return true; // Contract honored
+
+       }
+   }
+
+
+   class OnlineBankingStrategy implements PaymentStrategy {
+
+       @Override
+       public boolean processPayment(double amount) {
+
+           System.out.println("Processing online banking payment of
+   $" + amount);
+
+           return true; // Contract honored
+       }
+
+   }
+Interface Segregation Principle (ISP)
+
+
+ISP states that no client should be forced to depend on methods it does not use. Instead of
+
+creating a large and general-purpose interface, developers should create multiple smaller and
+
+specific interfaces. For EZShop, instead of a single and massive interface for all the system
+
+operations, it uses domain-focused interfaces. This will prevent classes from being forced to
+
+implement methods for unrelated inventory or pricing logic.
+
+
+
+   -  Before ISP is applied:
+      As can be seen in the BadPaymentProcesis forced to implement pricing and
+
+      observer methods.
+
+      // --- BEFORE: ISP VIOLATION ---
+      // One massive interface forces classes to implement methods they
+
+      don't need.
+      interface IEZShopOperations {
+
+          boolean processPayment(double amount);
+          void updateOrderState(String orderId, double finalTotal,
+      String status);
+
+          double calculateTotal();
+      }
+
+
+      // The payment processor is forced to implement pricing and
+
+      observer methods.
+      class BadPaymentProcessor implements IEZShopOperations {
+
+          public boolean processPayment(double amount) { return true; }
+          public void updateOrderState(String id, double t, String s) {
+      /* NOT USED */ }
+
+          public double calculateTotal() { return 0.0; /* NOT USED */ }
+      }
+
+
+
+
+   -  After ISP is applied:
+
+      As can be seen in the code, the interfaces are now segregated into multiple specific
+      and focus domain contracts.
+
+      // --- AFTER: ISP APPLIED ---
+
+      // Interfaces are segregated into specific, focused domain
+      contracts.
+
+
+      interface PaymentStrategy {
+          boolean processPayment(double amount);
+      }
+
+
+      interface IOrderObserver {
+
+          void update(String orderId, double finalTotal, String
+      status);
+      }
+
+
+      interface IPricingComponent {
+
+          double calculateTotal();
+      }
+
+
+
+Dependency Inversion Principle (DIP)
+
+
+It states that high-level modules should not depend on low-level modules, and both should
+
+depend on abstractions. In the Payment Processing module, the high-level CheckoutContext
+
+relies on the PaymentStrategy interface rather than concrete payment class. This abstraction
+
+decouple the components, making transaction routing highly flexible and easy to test.
+
+
+   -  Before using DIP:
+
+      CheckoutContext instantiates a concrete payment class directly, creating a hard
+
+      coupling, such as cannot switch to EWallet or OnlineBanking.
+      //  VIOLATION: High-level CheckoutContext depends on a low-level
+
+      concrete class
+      class CheckoutContext {
+
+          // DIP violated: hard dependency on CreditCardStrategy
+          private CreditCardStrategy paymentStrategy = new
+
+      CreditCardStrategy();
+
+
+          public boolean executeCheckout(double finalTotal) {
+              // Cannot switch to EWallet or OnlineBanking without
+      editing this class
+
+              return paymentStrategy.processPayment(finalTotal);
+          }
+
+      }
+
+
+   -  After applying DIP:
+
+      As can be seen in the code, by depending on PaymentStrategy abstraction rather than
+      concrete class, CheckoutContext is decoupled from implementation details. New
+payment can be introduced and swapped at runtime without doing any changes to the
+
+core checkout logic, making the system flexible and easy to unit test.
+// DIP: Both high-level (CheckoutContext) and low-level (concrete
+
+strategies)
+// depend on the PaymentStrategy abstraction — not on each other.
+
+
+
+public interface PaymentStrategy {
+    boolean processPayment(double amount);
+
+}
+
+
+// DIP: Low-level concrete classes implement the abstraction
+public static class CreditCardStrategy implements PaymentStrategy
+
+{
+    @Override
+
+    public boolean processPayment(double amount) {
+        System.out.println("Processing credit card payment of RM
+
+" + amount);
+        return true;
+
+    }
+}
+
+
+public static class EWalletStrategy implements PaymentStrategy {
+
+    @Override
+    public boolean processPayment(double amount) {
+
+        System.out.println("Processing e-wallet payment of RM " +
+amount);
+
+        return true;
+    }
+
+}
+
+
+public static class OnlineBankingStrategy implements
+PaymentStrategy {
+
+    @Override
+    public boolean processPayment(double amount) {
+
+        System.out.println("Processing online banking payment of
+RM " + amount);
+
+        return true;
+    }
+
+}
+
+
+// DIP: High-level CheckoutContext depends only on the
+
+abstraction.
+      // The concrete strategy is injected — never instantiated here.
+
+      public static class CheckoutContext {
+          private PaymentStrategy paymentStrategy;
+
+
+          public void setPaymentMethod(PaymentStrategy strategy) {
+
+              this.paymentStrategy = strategy;
+          }
+
+
+          public boolean executeCheckout(double finalTotal) {
+              if (paymentStrategy == null) {
+
+                   System.out.println("No payment method selected.");
+                   return false;
+
+              }
+              return paymentStrategy.processPayment(finalTotal);
+
+          }
+      }
+
+
+      // Entry point — concrete strategy is selected and injected at
+
+      runtime
+      public static void main(String[] args) {
+          CheckoutContext checkout = new CheckoutContext();
+
+          // Switch between any strategy without modifying
+      CheckoutContext
+
+          checkout.setPaymentMethod(new EWalletStrategy());
+          boolean result = checkout.executeCheckout(75.00);
+
+          System.out.println("Payment " + (result ? "successful" :
+      "failed"));
+
+      }
+
+
+
+
+
+3.1.3 Software Design Considerations
+
+
+   a. Scalability and Performance
+
+
+      The system must be able to handle high volumes of transactions simultaneously,
+      especially during seasonal sales or holiday sales. The Decorator patterns used in the
+
+      Pricing Engine allows the system to stack discounts in memory during runtime
+
+      without requiring multiple database calls or instantiating massive inheritance tree.
+
+      However, the system must manage the object life cycle actively to prevent memory
+
+      leaks when a lot of people are doing their checkout period.
+b. Maintainability and Readability
+
+
+    By adhering to this design principle, the resulting software will be more easy to
+
+    maintain, modify and troubleshoot. This approach ensures the codebase to be more
+    organized and easy to understand. In EZShop, this reduces the time and effort for
+
+    future bug fixes or module enhancements. High readability also means that each team
+
+    member can easily understand the architecture and continue to do their part on the
+    project.
+
+
+
+c. Reliability and Consistency
+
+
+    System reliability is very important especially for an e-commerce platform handling
+
+    live financial transactions. By adhering to this software principle, the software can
+
+    achieve a higher standard for quality, making the system to be more reliable, secure
+    and a better performance. For example by enforcing Liskov Substitution
+
+    Principle(LSP) within the payment processing module, the software can remain more
+
+    consistent and reliable when new subclasses of payments method are introduced in the
+    future.
+4. Proposed Design Patterns
+
+
+a. Strategy Pattern
+
+
+i. Function or Software Component Affected
+
+EZShop’s Checkout and Payment Processing module, along with its Discount and Price
+
+Calculation module subsystems apply the Strategy Pattern, both of which operate in tandem
+to ensure the system’s financial accuracy and transactional security. The pattern resolves the
+
+issue of coupling the core checkout flow with variable dependencies, such as third-party
+payment gateways, or complex internal business logic like discounts and promotions.
+
+
+
+In the Payment Processing module, the pattern defines a family of algorithms for transaction
+routing. The PaymentStrategy interface establishes the contract for all concrete payment
+
+methods, mandating a unified method for processing transactions. The CheckoutContext
+
+class assumes the role of the Context, managing the order total and delegating the secure
+transaction routing to the currently selected concrete strategy implementation. Concrete
+
+strategy   classes,   such   as    CreditCardPayment,       OnlineBankingPayment,        and
+
+EWalletPayment, each encapsulate the unique API logic required to simulate
+communication with their respective external payment providers.
+
+
+
+The pattern is also essential to the Dynamic Price Calculation module, where it abstracts the
+diverse mathematical rules for promotions. The IDiscountStrategy interface defines the core
+
+mathematical function for calculating price reductions, allowing the system to use different
+
+algorithms without altering the underlying pricing structure. This strategy is primarily
+leveraged by the PromotionDecorator (which acts as a context within the Decorator pattern
+
+structure), delegating the specific calculation to an injected strategy object. Concrete strategy
+classes like PercentageStrategy and FixedAmountStrategy implement IDiscountStrategy,
+
+ensuring that new promotional rules can be added effortlessly.
+
+
+ii. Description of work flow or data flow
+
+The Payment Strategy workflow begins when the user selects their preferred payment
+
+method (e.g., Credit Card, Online Banking, eWallet) via the user interface during checkout.
+Based on this selection, the client (frontend controller) instantiates the specific concrete
+
+strategy object corresponding to that method. This strategy object, along with the order
+payload (total amount, user ID), is then passed into the main Payment Context class. The
+
+Payment Context's primary function is delegation: it bypasses complex conditional logic by
+calling a single, unifiedProcessPayment() method on the injected strategy interface.
+
+The concrete strategy then communicates with its specific external API, processes the
+
+transaction, and returns a boolean (Success/Fail) back through the Context to the user
+
+interface.1
+
+The Discount Strategy workflow is integrated with the Decorator Pattern to handle complex
+
+price reductions. The process is initiated when the customer submits a promotional code or
+
+the system identifies an active global marketing campaign. The backend CheckoutContext
+
+first fetches the raw, undiscounted cart subtotal directly from the BaseCartPricing component.
+The system subsequently maps the specific promotion to its corresponding concrete strategy
+
+object (e.g., a percentage discount or a fixed-amount voucher). To enable the stacking of
+
+promotions,    the   base   pricing   component     is   dynamically    wrapped     inside   a
+
+PromotionDecorator. The PromotionDecorator then delegates the mathematical calculation to
+the injected DiscountStrategy interface by passing the subtotal, thereby maintaining a clear
+
+separation of concerns and avoiding nested conditional logic. The concrete strategy object
+
+executes its specific mathematical algorithm (e.g., calculating 20% off) and returns the new
+value, allowing this delegation process to loop sequentially for multiple promotions before
+
+returning the accurately calculated final price to the frontend interface.
+iii. Sample Class Diagram
+
+Example Structure
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Payment Strategy
+The class diagram for the Payment Strategy illustrates the application of a strategy pattern on
+
+the payment and checkout flow.
+
+In this design, the CheckoutContext acts as the context, it doesn't hardcode specific payment
+
+rules.Instead, it references PaymentStrategy and delegates the heavy lifting to it. When the
+
+system calls executeCheckout(), the context simply triggers the
+
+processPayment() method on whatever strategy is currently active. This separation of
+concerns ensures that the core checkout logic does not require modifications even if
+
+additional payment methods are added, keeping the system stable and highly maintainable.
+
+
+The PaymentStrategy serves as the Abstract Strategy, acting as a formal contract that
+dictates how all payment methods must behave. By defining a unified
+
+processPayment() signature, it allows the system to treat vastly different
+
+implementations—like CreditCardStrategy, OnlineBankingStrategy, and
+
+EWalletStrategy—as interchangeable components. These Concrete Strategies contain the
+specific, encapsulated logic for their respective providers. For instance, the EWalletStrategy
+
+might handle the specific API handshakes for local services like GrabPay or Touch 'n Go,
+while the CreditCardStrategy focuses on secure gateway encryption, all without the rest of
+
+the application needing to know those technical details.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Discount Strategy
+Similarly, the Discount Strategy utilises the PromotionContext as a secondary context. This
+
+class holds a reference to a DiscountStrategy, which acts as the Abstract Strategy for price
+adjustments. The Concrete Strategies, such as PercentageStrategy and
+
+FixedAmountStrategy, perform the actual math—calculating a fraction of the total or
+
+subtracting a flat Ringgit amount, respectively. By wrapping this logic in a decorator, you
+
+allow the system to dynamically calculate totals while potentially "stacking" or wrapping
+additional promotional rules around the base discount logic.
+
+
+Finally, the Client acts as the orchestrator of the entire ecosystem, responsible for "wiring"
+
+the components together at runtime. It instantiates the specific concrete strategies based on
+user input and injects them into the respective contexts. This approach perfectly exemplifies
+
+the Open/Closed Principle: the system is open for extension (you can add a
+
+"CryptoPayment" or "SeasonalDiscount" easily) but closed for modification (you never have
+to change the CheckoutContext code itself). This design not only makes your codebase
+
+more professional but also makes unit testing significantly easier, as each strategy can be
+
+tested in total isolation.
+iv. Sample Other UML Notations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+v. Sample Potential Code
+
+
+ import java.util.Scanner;
+
+ public class PaymentSystem {
+
+     public interface PaymentStrategy {
+         boolean processPayment(double amount);
+
+     }
+
+
+     public static class CreditCardStrategy implements PaymentStrategy
+ {
+
+         @Override
+         public boolean processPayment(double amount) {
+             System.out.println("Processing credit card payment of $"
+
++ amount);
+             return true;
+
+        }
+    }
+
+
+    public static class EWalletStrategy implements PaymentStrategy {
+
+        @Override
+
+        public boolean processPayment(double amount) {
+             System.out.println("Processing e-wallet payment of $" +
+
+amount);
+             return true;
+
+        }
+    }
+
+
+    public static class OnlineBankingStrategy implements
+
+PaymentStrategy {
+        @Override
+
+        public boolean processPayment(double amount) {
+             System.out.println("Processing online banking payment of
+
+$" + amount);
+             return true;
+
+        }
+
+    }
+
+
+    public static class CheckoutContext {
+        private PaymentStrategy paymentStrategy;
+
+
+        public void setPaymentMethod(PaymentStrategy strategy) {
+
+             this.paymentStrategy = strategy;
+        }
+
+
+        public boolean executeCheckout(double finalTotal) {
+
+             if (paymentStrategy == null) {
+                 System.out.println("No payment method selected.");
+
+                 return false;
+             }
+
+             return paymentStrategy.processPayment(finalTotal);
+
+        }
+    }
+
+
+    public static class ExampleApplication {
+        public static void main(String[] args) {
+
+             CheckoutContext checkout = new CheckoutContext();
+             Scanner scanner = new Scanner(System.in);
+
+
+             System.out.println("Select payment method:");
+
+             System.out.println("1. Credit Card");
+             System.out.println("2. E-Wallet");
+
+             System.out.println("3. Online Banking");
+
+             int choice = scanner.nextInt();
+
+
+             switch (choice) {
+                 case 1:
+
+                     checkout.setPaymentMethod(new
+CreditCardStrategy());
+
+                     break;
+                 case 2:
+
+                     checkout.setPaymentMethod(new EWalletStrategy());
+                     break;
+
+                 case 3:
+                     checkout.setPaymentMethod(new
+
+OnlineBankingStrategy());
+                     break;
+
+                 default:
+
+                     System.out.println("Invalid selection.");
+                     return;
+
+             }
+
+
+             double finalTotal = 99.99;
+             boolean result = checkout.executeCheckout(finalTotal);
+
+             System.out.println("Payment " + (result ? "successful" :
+"failed"));
+
+             scanner.close();
+        }
+
+    }
+
+
+    public static void main(String[] args) {
+        ExampleApplication.main(args);
+
+    }
+
+}
+vi. Benefit
+
+The principal architectural advantage of implementing the Strategy Pattern in EZShop is the
+rigorous compliance it enforces with the Open/Closed Principle. This is one of the most
+
+significant benefits for an e-commerce platform where the system must be open for extension
+
+but closed for modification. New functionalities, such as incorporating payment methods like
+Apple Pay or GrabPay, or integrating new discount types and promotions, can be achieved by
+
+simply creating a new class that implements the original strategy interface without requiring
+
+any changes to the existing, proven core codebase.
+
+
+The pattern also achieves crucial Separation of Concerns. The complex API logic necessary
+
+for communicating with external payment gateways is isolated entirely within individual
+
+concrete strategy classes. This architecture prevents the main e-commerce checkout
+workflow from becoming cluttered and simplifies maintenance by decoupling the core
+
+system from external dependencies.
+
+
+Furthermore, the Strategy Pattern ensures crucial Interchangeability. Both payment
+
+processing and discount algorithms can be swapped dynamically at runtime. This adaptability
+
+can be driven by various factors, including customer input (choosing a payment method),
+regional availability of a service, or the customer's membership subscriptions, allowing the
+
+system to handle varied transactional requirements instantly.
+
+
+
+Finally, it significantly facilitates Isolated Unit Testing. Both the payment and discount
+algorithms, now encapsulated in their own strategy classes, can be independently tested
+
+without the complex overhead of implementing databases, user sessions, or full checkout
+
+sequences. This allows for the creation of fast, reliable unit tests that feed raw data directly
+into the strategies, ensuring mathematical and procedural correctness efficiently.
+
+
+
+vii. Limitations
+While highly effective for keeping algorithms decoupled, the Strategy pattern does introduce
+
+a few architectural trade-offs, such as Class Proliferation (Class Explosion). Because the
+
+pattern strictly mandates that every unique algorithm must be encapsulated within its own
+dedicated class, the overall codebase can rapidly inflate. For instance, if the marketing
+
+department introduces dozens of highly specific, one-off variations for discounts, the backend
+
+structure will quickly become cluttered with numerous concrete strategy classes. This
+proliferation directly increases the cognitive load required for developers to navigate and
+
+understand the directory structure.
+
+
+A second significant limitation involves Data Payload Bottlenecks. The DiscountStrategy
+
+interface   defines   a  rigid   contract   for  the   data it    expects to receive      (e.g.,
+calculateDiscount(cartSubtotal)), limiting its flexibility. If a future, more sophisticated
+
+discount scheme requires new contextual data for its calculation—such as the user's
+
+geographic location or their lifetime purchase history—the interface signature must be
+modified. This change forces an update across all existing concrete strategies, which
+
+unintentionally violates the Open/Closed Principle during the necessary refactoring process.
+
+
+Finally, the pattern imposes a Client Awareness Burden. The system component responsible
+
+for instantiating the correct concrete strategies (which is often a factory or the promotion
+
+configuration module) must be intimately aware of the purpose and operational differences of
+
+each individual strategy. If the module's logic for mapping a promotion to its corresponding
+class is flawed, the system could easily inject an incompatible or incorrect mathematical
+
+algorithm into the checkout flow, leading to pricing errors.
+
+
+
+
+
+
+b. Observer Pattern
+
+
+i. Function or Software Component Affected
+EZShop's Order Notifications and Post-Purchase Processing subsystems use the Observer
+
+Pattern. When a successful payment transaction is confirmed, this subsystem controls the
+
+automatic background processes that need to run quickly and consistently. A strongly
+connected system where the basic checkout logic handles unrelated issues might come from
+
+the checkout module having to directly invoke each post-purchase service, such as inventory
+
+management and customer notification, in the absence of an organized architectural approach.
+
+
+The following components are directly impacted by this pattern. The IOrderSubject interface
+
+exposes the attachObserver(IOrderObserver observer), detachObserver(IOrderObserver
+observer), and notifyObservers(String orderId, double finalTotal, String status) methods,
+
+which specify the formal contract for the observable object. The actual implementation of this
+interface is the OrderProcessor class, which acts as the pattern's Subject. It maintains a
+
+private final list of IOrderObserver instances named observers and a private String field
+named    currentOrderId.    When    it   receives  a   payment    success    signal  via   its
+
+completeOrder(String orderId, double finalTotal) method, it changes the order status to
+
+"Paid" and then invokes notifyObservers.
+
+
+The observer contract is defined by the IOrderObserver interface, which mandates that all
+
+implementing classes supply a concrete implementation of the update(String orderId, double
+finalTotal, String status) method. The InventoryObserver class, a concrete observer, would
+
+contain logic to decrease stock quantities. The EmailNotificationObserver class, a second
+
+concrete observer, formats and sends an order confirmation receipt to the customer. These
+elements work together to create a fully decoupled event-driven notification architecture that
+
+separates the particulars of post-purchase processing from the checkout process.
+
+
+
+
+ii. Description of work flow or data flow
+The Observer Pattern is based on the principle of a one-to-many dependency, in which a
+
+single Subject object automatically updates and tells all dependent Observer objects when its
+
+internal state changes, without the Subject needing to be directly aware of what those
+observers do. This corresponds to the following end-to-end workflow in the context of
+
+EZShop.
+
+
+
+The appropriate concrete observer instances, namely an InventoryObserver and an
+EmailNotificationObserver, are instantiated and registered with the OrderProcessor by
+
+invoking the attachObserver method during system initialization or session setup. Upon the
+
+customer's completion of the payment process, the CheckoutContext invokes the
+completeOrder(String orderId, double finalTotal) method on the OrderProcessor. Inside this
+
+method, the processor executes two actions in succession. Initially, it prints a confirmation
+
+message including the order ID and the status "Paid". Subsequently, it promptly runs its own
+notifyObservers(String orderId, double finalTotal, String status) method. This internal
+
+function traverses all observers registered in the observers collection and calls the update
+
+method on each, supplying the orderId, finalTotal, and status as data payloads.
+Each observer subsequently implements its own autonomous logic separately. The
+
+InventoryObserver would traverse a collection of cart items, obtain the corresponding product
+for each item, compute the new stock level by deducting the purchased quantity, and save the
+
+updated value. The EmailNotificationObserver retrieves pertinent order information such as
+
+the Order ID and final total, and sends a structured confirmation message to the consumer.
+Importantly, neither observer interacts with the other, and neither the OrderProcessor nor the
+
+CheckoutContext possesses any knowledge of the internal operations of these observers. The
+
+entire post-purchase workflow is executed through a single method call, ensuring a clear and
+distinct separation of responsibilities inside the system.
+
+
+
+
+iii. Sample Class Diagram
+
+Example General Structure
+Class Diagram:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+iv. Sample Other UML Notations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+v. Sample Potential Code
+import java.util.ArrayList;
+
+import java.util.List;
+
+// ─── IOrderObserver ───────────────────────────────────────────────────────────
+// SRP: Defines one contract — the observer notification method only.
+// OCP: Any new post-purchase behaviour implements this interface without
+
+//      modifying OrderProcessor or any existing observer.
+
+interface IOrderObserver {
+
+   void update(String orderId, double finalTotal, String status);
+}
+
+
+
+// ─── IOrderSubject ────────────────────────────────────────────────────────────
+// SRP: Defines one contract — the subject observer management methods only.
+
+interface IOrderSubject {
+
+   void attachObserver(IOrderObserver observer);
+   void detachObserver(IOrderObserver observer);
+
+   void notifyObservers(String orderId, double finalTotal, String status);
+
+   void completeOrder(String orderId, double finalTotal);
+}
+
+
+
+// ─── OrderProcessor ───────────────────────────────────────────────────────────
+// SRP: Responsible for one thing — managing order state transitions and
+
+//      broadcasting that state change to registered observers. It does not
+
+//      know or care what any observer does internally.
+
+// OCP: Closed for modification. The completeOrder() and notifyObservers()
+//      methods never need to change when new observer types are added.
+
+class OrderProcessor implements IOrderSubject {
+
+   private final List<IOrderObserver> observers = new ArrayList<>();
+   private String currentOrderId;
+
+
+
+   @Override
+   public void attachObserver(IOrderObserver observer) {
+
+       if (!observers.contains(observer)) {
+
+           observers.add(observer);
+       }
+
+   }
+
+
+
+   @Override
+   public void detachObserver(IOrderObserver observer) {
+
+       observers.remove(observer);
+
+   }
+
+
+   @Override
+
+   public void notifyObservers(String orderId, double finalTotal, String status) {
+       for (IOrderObserver observer : observers) {
+
+           observer.update(orderId, finalTotal, status);
+
+       }
+   }
+   public void completeOrder(String orderId, double finalTotal) {
+       String status = "Paid";
+
+       this.currentOrderId = orderId;
+
+       System.out.println("[OrderProcessor] Order " + orderId
+
+           + " status updated to '" + status + "'.");
+       notifyObservers(orderId, finalTotal, status);
+
+   }
+
+}
+
+
+// ─── InventoryObserver ────────────────────────────────────────────────────────
+
+// SRP: Responsible for one thing — stock deduction logic only.
+//      Any change to inventory rules is isolated here and cannot affect
+
+//      the email notification logic in EmailNotificationObserver.
+
+class InventoryObserver implements IOrderObserver {
+   @Override
+
+   public void update(String orderId, double finalTotal, String status) {
+
+       System.out.println("\n[InventoryObserver] Processing stock deduction for
+Order: " + orderId);
+
+       System.out.println("   Order Status : " + status);
+
+       System.out.println("   Order Total   : RM " + String.format("%.2f",
+
+finalTotal));
+       System.out.println("[InventoryObserver] Stock deduction complete.");
+
+   }
+
+}
+
+
+// ─── EmailNotificationObserver ────────────────────────────────────────────────
+
+// SRP: Responsible for one thing — customer email receipt formatting and
+//      dispatch only. As stated in EZShop's design principles, updates to
+
+//      the email formatting logic cannot break the inventory deduction system
+
+//      because the two concerns are fully isolated in separate classes.
+class EmailNotificationObserver implements IOrderObserver {
+
+   @Override
+
+   public void update(String orderId, double finalTotal, String status) {
+
+       System.out.println("\n[EmailNotificationObserver] Preparing confirmation
+receipt...");
+
+       System.out.println("   +-------------------------------------------------+");
+
+       System.out.println("   |             EZShop Order Confirmation
+|");
+
+       System.out.println("   +-------------------------------------------------+");
+
+       System.out.printf("   | Order ID    : %-35s |%n", orderId);
+       System.out.printf("   | Status      : %-35s |%n", status);
+
+       System.out.printf("   | Final Total: RM %-32.2f |%n", finalTotal);
+
+       System.out.println("   +-------------------------------------------------+");
+       System.out.println("[EmailNotificationObserver] Confirmation receipt
+
+dispatched.");
+   }
+
+}
+
+
+// ─── ObserverPatternDemo (Main) ───────────────────────────────────────────────
+public class ObserverPatternDemo {
+
+   public static void main(String[] args) {
+
+
+       // Initialise the Subject and register Observers
+       // OCP: New observers are added here without modifying OrderProcessor
+
+       IOrderSubject processor = new OrderProcessor();
+
+
+       InventoryObserver inventoryObserver       = new InventoryObserver();
+
+       EmailNotificationObserver emailObserver = new EmailNotificationObserver();
+
+
+       processor.attachObserver(inventoryObserver);
+       processor.attachObserver(emailObserver);
+
+
+       // Simulate first payment success — both observers active
+
+       System.out.println("=== Order 1: Both observers active ===\n");
+       processor.completeOrder("ORD-202605", 75.00);
+
+
+       // Demonstrate OCP at runtime — detach email observer without
+
+       // modifying OrderProcessor or InventoryObserver in any way
+
+       System.out.println("\n\n=== Order 2: EmailNotificationObserver detached —
+OrderProcessor unchanged ===\n");
+
+       processor.detachObserver(emailObserver);
+       processor.completeOrder("ORD-202606", 120.00);
+
+   }
+}
+
+
+
+
+
+vi. Benefit
+
+The principal architectural advantage of using the Observer Pattern in EZShop's
+
+post-purchase subsystem is the realisation of authentic loose coupling between the checkout
+
+process and its subsequent side effects. The OrderProcessor subject does not have a
+
+compile-time reliance on either the InventoryObserver or the EmailNotificationObserver. Its
+
+sole awareness of its observers is via the IOrderObserver interface contract. This indicates
+
+that the complete post-purchase processing framework can be altered, expanded, or
+
+substituted without necessitating modifications to the preceding checkout or payment logic.
+The pattern mandates rigorous compliance with the Open/Closed Principle. As the EZShop
+
+platform evolves and new post-purchase requirements arise, including an SMS notification
+service, a loyalty points calculation engine, or a real-time analytics event emitter, each
+
+requirement can be addressed by creating a new concrete observer class and registering it
+
+with the OrderProcessor. The existing codebase remains unaltered, significantly reducing
+regression risk. The provided code demonstrates this by attaching and detaching observers at
+
+runtime without modifying the OrderProcessor class.
+
+
+Moreover, each specific observer class exemplifies the Single Responsibility Principle. The
+
+InventoryObserver     is   only   accountable    for   stock   management,     whereas    the
+
+EmailNotificationObserver is solely tasked with customer contact. This clear decomposition
+renders each class independently testable via unit testing, independently deployable, and
+
+independently maintainable. An error in the email formatting logic can be identified and
+
+rectified without the risk of unintentionally impacting the inventory management system.
+
+
+The Observer Pattern furthermore offers runtime adaptability. As observers are registered and
+
+deregistered via method calls instead of fixed dependencies, the system can dynamically alter
+
+the active post-purchase procedures. During a designated maintenance time, the email
+observer may be deregistered without disrupting inventory processing or necessitating a
+
+system restart, as shown in the ObserverPatternDemo where detachObserver is called before
+
+the second order.
+
+
+
+vii. Limitations
+
+Notwithstanding its structural benefits, the Observer Pattern presents certain architectural
+
+trade-offs that require meticulous management inside the EZShop framework. The primary
+issue is the lack of assured execution sequencing. Observers are informed in the order of their
+
+registration with the Subject. The current implementation, while predictable, creates a
+
+precarious implicit dependency: should a subsequent observer depend on a side effect
+generated by a prior observer, the system's correctness would hinge on the order of
+
+registration, an obscure and challenging constraint that may lead to subtle bugs.
+
+
+A secondary problem is the possibility of memory leaks if observers are not explicitly
+
+deregistered when they are no longer needed. The OrderProcessor retains strong references to
+every registered observer inside its observers list. If observer objects are instantiated per
+session or per request without invoking the necessary detachObserver method, the Subject
+
+will maintain active references to objects that should have been eligible for garbage
+
+collection, resulting in unbounded memory growth in long-running server processes.
+
+
+The pattern further complicates debugging and traceability. The notification mechanism is
+
+implicit, thus a developer examining the completeOrder method will see only one invocation
+of notifyObservers. The tangible downstream impacts, such as inventory reduction and email
+
+transmission, are not apparent at the call location. In intricate systems with numerous
+
+registered observers, this indirection can substantially complicate the identification of a bug's
+source, especially when the problem arises from an unforeseen interaction between two
+
+observers responding to the same event.
+
+
+Furthermore, the fundamental Observer architecture outlined does not ensure mistake
+
+isolation among observers. If the InventoryObserver.update() method raises an unhandled
+
+exception, causing the iteration loop in notifyObservers to conclude before executing
+EmailNotificationObserver.update(), the customer might not receive their confirmation
+
+receipt despite the acceptance of their payment. A production-grade implementation must
+
+encapsulate each observer invocation behind distinct exception handling, hence introducing
+complexity to the Subject class that exceeds the original scope of the pattern.
+
+
+
+c. Decorator Pattern
+
+
+i. Function or Software Component Affected
+The Decorator Pattern is utilized in the Pricing Engine, particularly in the discount
+
+calculation and promotional stacking subsystem of EZShop. This subsystem computes the
+
+precise final price of a customer's shopping cart during checkout, considering any
+concurrently applicable promotions. This pattern tackles the architectural difficulty of
+
+dynamically composing numerous independent discount rules without relying on a rigid and
+
+unmanageable inheritance tree.
+
+
+The components immediately impacted are as follows. The IPricingComponent interface
+
+establishes a standardized contract for all pricing entities, mandating that implementers
+provide a single calculateTotal() method that returns a double indicating the current cart total.
+The BaseCartPricing class serves as the concrete component and the fundamental ingredient
+
+of each price chain. It accepts a double cartSubtotal parameter in its constructor and returns
+that value when calculateTotal() is called. The PromotionDecorator abstract class functions as
+
+the abstract decorator, implementing IPricingComponent and maintaining a reference to
+
+another IPricingComponent instance named wrappedComponent, thereby facilitating
+recursive composition. The concrete decorator classes, namely HolidaySaleDecorator,
+
+ShippingVoucherDecorator, and MembershipTierDecorator, extend PromotionDecorator and
+
+each incorporate a specific promotional discount into the computation sequence. The
+HolidaySaleDecorator applies a 20% percentage discount, the ShippingVoucherDecorator
+
+subtracts a fixed amount of RM 5.00, and the MembershipTierDecorator applies a
+
+configurable      percentage      discount     passed      via     its     constructor     as
+membershipDiscountPercentage.
+
+
+
+
+
+ii. Description of work flow or data flow
+
+The Decorator Pattern operates by enclosing objects that possess a shared interface within
+
+successive layers of supplementary behaviour. Consequently, invoking a method on the
+outermost wrapper initiates a series of delegated calls throughout the entire chain, with each
+
+layer imparting its own alteration to the outcome before relaying it upward. In EZShop, this
+
+approach enables the successive application of an unlimited number of promotional
+reductions to a basic cart price, without any individual class requiring knowledge of the
+
+others.
+
+
+The workflow commences upon the initiation of the checkout procedure. A BaseCartPricing
+
+object is created using a double value representing the customer's current cart subtotal, such
+
+as RM 80.00. Upon direct invocation of calculateTotal() on this object, it yields the
+
+unchanged subtotal, RM 80.00.
+
+
+Upon consumer qualification for a promotional campaign, the system generates a decorator
+
+chain encircling the base component. The initial relevant promotion, exemplified by a holiday
+seasonal sale providing a 20% discount, is implemented by creating a HolidaySaleDecorator
+
+and supplying the BaseCartPricing instance as an argument to its constructor. The decorator
+
+internally retains this reference as its wrappedComponent. A second offer, a fixed-amount
+shipping voucher reducing RM 5.00, is introduced by creating a ShippingVoucherDecorator
+
+and providing the HolidaySaleDecorator instance as its constructor argument, so extending
+the chain. A third offer, a membership tier discount of 10%, can be added by creating a
+
+MembershipTierDecorator and placing it appropriately in the chain. The CheckoutContext
+
+now contains a reference to this outermost decorator as an IPricingComponent.
+
+
+Upon the invocation of calculateTotal() by the CheckoutContext on this outermost reference,
+
+recursive delegation ensues. The ShippingVoucherDecorator invokes calculateTotal() on its
+encapsulated component. This continues until the BaseCartPricing calculates and yields RM
+
+80.00. The MembershipTierDecorator receives this amount and applies its percentage
+
+discount, returning the new total. The HolidaySaleDecorator receives that amount and applies
+its 20% discount. The ShippingVoucherDecorator then subtracts RM 5.00, resulting in a final
+
+total which is subsequently returned to the CheckoutContext. During this procedure, the
+
+CheckoutContext executed a solitary method call via a single interface reference, entirely
+
+oblivious to the intricacies or structure of the invoked chain.
+
+
+iii. Sample Class Diagram
+Example General Structure:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Class Diagram:
+iv. Sample Other UML Notations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+v. Sample Potential Code
+// ─── IPricingComponent ────────────────────────────────────────────────────────
+
+// SRP: Defines one contract — the calculateTotal() method only.
+// OCP: Both BaseCartPricing and PromotionDecorator implement this interface.
+
+//      New pricing behaviours are added by implementing this interface,
+//      never by modifying it.
+interface IPricingComponent {
+   double calculateTotal();
+
+}
+
+
+
+// ─── BaseCartPricing ──────────────────────────────────────────────────────────
+// SRP: Responsible for one thing — computing the raw undiscounted cart
+
+//      subtotal only. It has no knowledge of any promotional logic.
+
+// OCP: This class is closed for modification. No matter how many new
+//      decorator types are added to the system, BaseCartPricing never changes.
+
+class BaseCartPricing implements IPricingComponent {
+
+   private double cartSubtotal;
+
+
+   public BaseCartPricing(double cartSubtotal) {
+
+       this.cartSubtotal = cartSubtotal;
+   }
+
+
+
+   @Override
+   public double calculateTotal() {
+
+       System.out.printf("   [BaseCartPricing]               Raw subtotal
+
+: RM %.2f%n",
+
+           cartSubtotal);
+       return cartSubtotal;
+
+   }
+
+}
+
+
+// ─── PromotionDecorator ───────────────────────────────────────────────────────
+
+// SRP: Responsible for one thing — holding the wrapping reference to another
+//      IPricingComponent and defining the abstract decoration contract.
+
+//      It delegates the actual discount logic to each concrete subclass.
+
+// OCP: Closed for modification. New promotion types extend this class
+//      without requiring changes to it.
+
+abstract class PromotionDecorator implements IPricingComponent {
+
+   protected final IPricingComponent wrappedComponent;
+
+
+   protected PromotionDecorator(IPricingComponent wrappedComponent) {
+
+       this.wrappedComponent = wrappedComponent;
+
+   }
+
+
+   @Override
+
+   public abstract double calculateTotal();
+}
+
+
+
+// ─── HolidaySaleDecorator ─────────────────────────────────────────────────────
+// SRP: Responsible for one thing — applying the 20% holiday sale discount only.
+
+//      Any change to the holiday sale rate is isolated entirely within this class.
+class HolidaySaleDecorator extends PromotionDecorator {
+   private static final double DISCOUNT_PERCENTAGE = 0.20;
+
+
+
+   public HolidaySaleDecorator(IPricingComponent wrappedComponent) {
+
+       super(wrappedComponent);
+   }
+
+
+
+   @Override
+   public double calculateTotal() {
+
+       double totalBeforeDiscount = wrappedComponent.calculateTotal();
+
+       double totalAfterDiscount   = totalBeforeDiscount * (1.0 -
+DISCOUNT_PERCENTAGE);
+
+       System.out.printf("   [HolidaySaleDecorator]          Applied 20%% holiday
+
+sale discount       : RM %.2f --> RM %.2f%n" ,
+           totalBeforeDiscount, totalAfterDiscount);
+
+       return totalAfterDiscount;
+
+   }
+}
+
+
+
+// ─── ShippingVoucherDecorator ─────────────────────────────────────────────────
+
+// SRP: Responsible for one thing — applying the fixed RM 5.00 shipping
+//      voucher deduction only. Changes to the shipping voucher amount
+
+//      are isolated entirely within this class.
+
+class ShippingVoucherDecorator extends PromotionDecorator {
+   private static final double DISCOUNT_AMOUNT = 5.00;
+
+
+
+   public ShippingVoucherDecorator(IPricingComponent wrappedComponent) {
+       super(wrappedComponent);
+
+   }
+
+
+   @Override
+
+   public double calculateTotal() {
+
+       double totalBeforeDiscount = wrappedComponent.calculateTotal();
+
+       double totalAfterDiscount   = totalBeforeDiscount - DISCOUNT_AMOUNT;
+       System.out.printf("   [ShippingVoucherDecorator]      Applied RM 5.00 shipping
+
+voucher        : RM %.2f --> RM %.2f%n" ,
+
+           totalBeforeDiscount, totalAfterDiscount);
+       return totalAfterDiscount;
+
+   }
+
+}
+
+
+// ─── MembershipTierDecorator ──────────────────────────────────────────────────
+
+// SRP: Responsible for one thing — applying a configurable membership
+//      tier percentage discount only.
+
+// OCP: This class demonstrates OCP in action. It was added as a new
+//      campaign requirement by extending PromotionDecorator, without
+//      modifying BaseCartPricing, HolidaySaleDecorator,
+
+//      ShippingVoucherDecorator, or any other existing class.
+
+class MembershipTierDecorator extends PromotionDecorator {
+
+   private final double membershipDiscountPercentage;
+
+
+   public MembershipTierDecorator(IPricingComponent wrappedComponent,
+
+                                   double membershipDiscountPercentage) {
+       super(wrappedComponent);
+
+       this.membershipDiscountPercentage = membershipDiscountPercentage;
+
+   }
+
+
+   @Override
+
+   public double calculateTotal() {
+       double totalBeforeDiscount = wrappedComponent.calculateTotal();
+
+       double totalAfterDiscount   = totalBeforeDiscount * (1.0 -
+
+membershipDiscountPercentage);
+       System.out.printf("   [MembershipTierDecorator]       Applied %.0f%%
+
+membership discount         : RM %.2f --> RM %.2f%n" ,
+
+           membershipDiscountPercentage * 100, totalBeforeDiscount,
+
+totalAfterDiscount);
+       return totalAfterDiscount;
+
+   }
+
+}
+
+
+// ─── DecoratorPatternDemo (Main) ──────────────────────────────────────────────
+
+public class DecoratorPatternDemo {
+   public static void main(String[] args) {
+
+
+
+       System.out.println("=== EZShop Pricing Engine Demo ===");
+       System.out.println("   Cart subtotal before any promotions: RM 80.00\n");
+
+
+
+       // Scenario 1: No promotions
+
+       // SRP: BaseCartPricing is invoked alone, proving it has no
+       //       knowledge of or dependency on any discount logic
+
+       System.out.println("--- Scenario 1: No promotions (base price only) ---");
+
+       IPricingComponent scenario1 = new BaseCartPricing(80.00);
+       double total1 = scenario1.calculateTotal();
+
+       System.out.printf("   Final Total: RM %.2f%n%n", total1);
+
+
+       // Scenario 2: Holiday Sale only (20% off)
+
+       // OCP: HolidaySaleDecorator is wrapped around BaseCartPricing
+
+       //       without modifying BaseCartPricing
+       System.out.println("--- Scenario 2: Holiday Sale (20% off) ---");
+
+       IPricingComponent scenario2 = new HolidaySaleDecorator(
+           new BaseCartPricing(80.00)
+
+       );
+       double total2 = scenario2.calculateTotal();
+
+       System.out.printf("   Final Total: RM %.2f%n%n", total2);
+
+
+       // Scenario 3: Holiday Sale (20% off) + Shipping Voucher (RM 5.00 off)
+       // OCP: ShippingVoucherDecorator is stacked on top without modifying
+
+       //       HolidaySaleDecorator or BaseCartPricing
+
+       System.out.println("--- Scenario 3: Holiday Sale (20% off) + Shipping
+Voucher (RM 5.00 off) ---");
+
+       IPricingComponent scenario3 = new ShippingVoucherDecorator(
+           new HolidaySaleDecorator(
+
+                new BaseCartPricing(80.00)
+           )
+
+       );
+
+       double total3 = scenario3.calculateTotal();
+       System.out.printf("   Final Total: RM %.2f%n%n", total3);
+
+
+       // Scenario 4: Membership (10%) + Holiday Sale (20%) + Shipping Voucher (RM
+
+5.00)
+       // OCP: MembershipTierDecorator was introduced as a new campaign requirement
+
+       //       by extending PromotionDecorator only — BaseCartPricing,
+       //       HolidaySaleDecorator, and ShippingVoucherDecorator are untouched
+
+       System.out.println("--- Scenario 4: Membership (10%) + Holiday Sale (20%) +
+
+Shipping Voucher (RM 5.00) ---" );
+       IPricingComponent scenario4 = new ShippingVoucherDecorator(
+
+           new HolidaySaleDecorator(
+                new MembershipTierDecorator(
+
+                    new BaseCartPricing(80.00), 0.10
+                )
+
+           )
+
+       );
+       double total4 = scenario4.calculateTotal();
+
+       System.out.printf("   Final Total: RM %.2f%n", total4);
+   }
+
+}
+
+
+
+
+vi. Benefit
+
+The primary architectural advantage of implementing the Decorator Pattern in EZShop's
+
+Pricing Engine is its ability to mitigate the subclass explosion identified by the Gang of Four.
+
+
+In the absence of this pattern, each distinct combination of active promotions would require a
+
+separate    class,    such     as     a    HolidayAndShippingDiscount       class,    a
+MembershipAndHolidayDiscount class, and so on. As the variety of promotion kinds
+
+expands, the number of necessary classes increases combinatorially. The Decorator Pattern
+simplifies this complexity by dynamically combining behaviours at runtime, necessitating
+
+only one class for each promotion type, irrespective of the number of conceivable
+
+combinations. The DecoratorPatternDemo clearly shows four different scenarios built from
+the same small set of classes.
+
+
+
+The pattern ensures rigorous compliance with the Open/Closed Principle in the pricing
+subsystem. The MembershipTierDecorator was added as a new campaign requirement by
+
+extending    PromotionDecorator     only.   BaseCartPricing,   HolidaySaleDecorator,     and
+
+ShippingVoucherDecorator      remain   completely    untouched.   No    alterations  to  the
+BaseCartPricing class, the PromotionDecorator base class, or any current concrete decorators
+
+are necessary for new promotion types. This renders the pricing engine truly extendable to
+
+adapt to changing marketing demands without risking regression of present capabilities.
+
+
+The pattern also enforces the Single Responsibility Principle. BaseCartPricing is responsible
+
+only for returning the base cart subtotal. HolidaySaleDecorator applies only a 20% holiday
+
+discount. ShippingVoucherDecorator handles only the RM 5.00 shipping voucher deduction.
+MembershipTierDecorator applies only the membership percentage discount. Changes to any
+
+one discount logic are isolated entirely within that single class.
+
+
+The CheckoutContext class engages with the whole price chain via the singular
+
+IPricingComponent interface, remaining entirely indifferent to the chain's complexity or
+
+structure. The CheckoutContext is independently tested and maintainable, as it is not coupled
+
+with any specific discount logic.
+
+
+vii. Limitations
+The principal structural constraint of the Decorator Pattern is that the resultant final price is
+
+contingent upon the sequence in which decorators are applied in the chain. Applying a 20%
+
+discount to a base price of RM 80.00 prior to deducting a set RM 5.00 voucher results in RM
+59.00, whereas applying the fixed deduction first followed by the percentage reduction yields
+
+RM 75.00. The pattern lacks a means to enforce a canonical ordering, indicating that the
+
+correct composition sequence is an implicit assumption that the developer must uphold
+
+during development, as shown in the four scenarios where the ordering is manually
+constructed. If the chain is improperly built, the system will yield a mathematically valid yet
+commercially erroneous result without generating any mistake.
+
+
+
+The pattern diminishes the transparency of the runtime object hierarchy, hence complicating
+debugging. Upon examining the pricing engine reference within CheckoutContext during
+
+runtime, a developer perceives solely the outermost decorator. Establishing the complete
+
+sequence of implemented promotions and their intermediate outcomes necessitates manually
+navigating the recursive delegation by stepping through each decorator's calculateTotal()
+
+method, which is significantly more arduous than reviewing a straightforward list of applied
+
+discounts in a more uncomplicated, non-pattern implementation.
+
+
+Moreover, when the quantity of registered promotion kinds escalates, the number of small,
+
+single-purpose decorator objects that need to be instantiated per checkout session rises
+proportionately. Scenario 4 in the demonstration requires three decorator objects
+
+(ShippingVoucherDecorator,      HolidaySaleDecorator,     and     MembershipTierDecorator)
+
+wrapping a single BaseCartPricing instance. Although each individual object is lightweight, a
+system handling a substantial volume of simultaneous checkout sessions may generate a
+
+considerable quantity of ephemeral decorator objects, hence intensifying the burden on the
+
+garbage collector in managed runtime settings.
+
+
+The Decorator Pattern, as implemented, consolidates all price logic into a singular method
+
+signature, calculateTotal(). If the IPricingComponent interface requires extension with
+additional methods in the future, such as a getDiscountBreakdown() method that provides a
+
+comprehensive line-by-line summary of applied discounts, all existing concrete decorators
+
+(HolidaySaleDecorator, ShippingVoucherDecorator, MembershipTierDecorator) and the
+
+abstract decorator base class (PromotionDecorator) must be modified to implement or
+delegate the new method. This imposes a maintenance load that increases with the quantity of
+
+decorator classes in the system, necessitating a consideration of the trade-off against the
+
+extensibility advantages offered by the design.
+
+
+
+
+5. Conclusion and Suggestion
+The EZShop architectural design successfully validates the feasibility and critical importance
+
+of strategic software design pattern implementation in a modern e-commerce platform. The
+system achieves essential quality attributes—extensibility, maintainability, and loose
+
+coupling—by applying the Strategy, Observer, and Decorator patterns, directly addressing
+
+the core functional requirement of dynamically calculating complex, stacked promotional
+
+discounts. The Strategy Pattern ensures a robust Separation of Concerns in both payment
+processing and discount calculation, successfully decoupling the core checkout logic from
+
+diverse algorithms. This ensures that the system is Open for Extension to new payment
+
+methods and discount formulas without modifying existing code, aligning directly with the
+Open/Closed Principle (OCP). Furthermore, the Decorator Pattern offers an elegant solution
+
+to the inherent Class Proliferation problem in promotional stacking. By dynamically
+
+wrapping the base cart price, the system can apply an unlimited combination of discounts at
+
+runtime, allowing new promotions to be added seamlessly without altering the core pricing
+structure, which also reinforces OCP. Finally, the Observer Pattern establishes Loose
+
+Coupling between the high-priority checkout transaction and non-critical, post-purchase side
+
+effects like inventory deduction and notification. This event-driven architecture guarantees
+that the core payment path remains fast and isolated, allowing background tasks to execute
+
+independently without introducing synchronous dependencies. The integration of these
+
+patterns has resulted in a highly modular and resilient architecture, as demonstrated by the
+
+detailed diagrams and code samples. While the limitations identified for each pattern
+(Strategy's Client Awareness Burden, Observer's lack of guaranteed execution sequencing,
+
+and Decorator's implicit ordering dependency) are inherent trade-offs, they have been duly
+
+noted for mitigation during the development phase.5.2 Suggestion
+
+
+Based on the architectural findings and the identified limitations, the following suggestion is
+
+proposed to significantly enhance the robustness and long-term maintainability of the
+
+EZShop platform: Implement a Centralized Policy Engine to Govern Decorator and
+Strategy Ordering. The most significant risk to the system's financial integrity lies in the
+
+dependence on correct, explicit ordering for both the Decorator chain (price calculation
+
+sequence) and the Observer notification list (post-purchase execution). To mitigate the
+
+Decorator's reliance on implicit sequence and the Observer's lack of guaranteed execution
+order, a dedicated, lightweight Policy Engine module should be introduced. This engine
+
+would serve two primary purposes. First, it would provide Discount Policy Enforcement
+
+(Decorator) by defining a clear, configurable, and canonical sequence for applying discounts
+(e.g., always apply fixed-amount vouchers after percentage-based sales). This engine would
+assume the sole responsibility for constructing the Decorator chain, removing the risk of
+
+correct ordering from the developer during runtime promotion application. Second, it would
+
+manage Observer Priority Management by controlling the registration and execution order
+of Observers in the OrderProcessor. Instead of relying on passive registration order, the
+
+engine would register Observers based on a predefined priority, ensuring critical actions (like
+
+Inventory Deduction) are always executed and wrapped in explicit error handling before
+non-critical actions (like Email Notification). This additional layer of abstraction (the Policy
+
+Engine) will elevate the system's structural integrity, transforming implicit ordering
+
+assumptions into explicit, maintainable business rules, thereby further strengthening
+compliance with the Single Responsibility Principle and reducing future debugging
+
+complexity.
+
+
+
+
+
+6. Bibliography/Reference
+
+       Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). Design patterns: Elements
+of reusable object-oriented software. Addison-Wesley.
+
+       Cappi, J., Rossi, G., Fortier, A., & Schwabe, D. (2001). Seamless personalization of
+
+e-commerce applications. In H. S. Kunii, S. Jajodia, & A. Sølvberg (Eds.), Conceptual
+modeling — ER 2001 (Vol. 2224, pp. 463–476). Springer.
+
+https://doi.org/10.1007/3-540-45581-7_34
+
+       Charalampidou, S., Ampatzoglou, A., Avgeriou, P., Sencer, S., Arvanitou, E.-M., &
+Stamelos, I. (2017). A theoretical model for capturing the impact of design patterns on
+
+quality: The decorator case study. In Proceedings of the Symposium on Applied Computing
+
+(SAC 2017) (pp. 1231–1238). Association for Computing Machinery.
+https://doi.org/10.1145/3019612.3019781
+
+       Shvets, A. (n.d.). Strategy. Refactoring.Guru.
+https://refactoring.guru/design-patterns/strategy

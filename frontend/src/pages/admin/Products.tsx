@@ -3,10 +3,30 @@ import { Link } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
+import { useAuth } from '../../context/AuthContext'
 import type { Product } from '../../types'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 
+// Helper to provide nice category-specific clothing images since the ERD has no image column
+const getProductImage = (p: any) => {
+  const cat = (p.category || '').toLowerCase()
+  if (cat.includes('shirt') || cat.includes('top') || cat.includes('tee')) {
+    return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=200&h=200&fit=crop'
+  }
+  if (cat.includes('pant') || cat.includes('jean') || cat.includes('trouser') || cat.includes('bottom')) {
+    return 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&h=200&fit=crop'
+  }
+  if (cat.includes('shoe') || cat.includes('sneaker') || cat.includes('footwear')) {
+    return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&h=200&fit=crop'
+  }
+  if (cat.includes('jacket') || cat.includes('coat') || cat.includes('outerwear')) {
+    return 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=200&h=200&fit=crop'
+  }
+  return 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200&h=200&fit=crop' // fallback shirt
+}
+
 export default function AdminProducts() {
+  const { adminToken } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -14,18 +34,53 @@ export default function AdminProducts() {
   const fetchProducts = () => {
     setLoading(true)
     const params = search ? `?search=${encodeURIComponent(search)}` : ''
-    fetch(`/api/admin/products${params}`)
-      .then((r) => r.json())
-      .then((data) => setProducts(data))
+    fetch(`/api/admin/inventory${params}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to load products')
+        return r.json()
+      })
+      .then((data) => {
+        const mapped: Product[] = (data || []).map((p: any) => ({
+          id: String(p.productid),
+          name: p.name,
+          slug: p.name.toLowerCase().replace(/\s+/g, '-'),
+          description: p.description || '',
+          price: Number(p.basePrice),
+          stock: Number(p.stockQuantity),
+          category: p.category,
+          image: getProductImage(p),
+          rating: 0,
+          reviewCount: 0,
+          createdAt: p.created_at,
+        }))
+        setProducts(mapped)
+      })
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchProducts() }, [search])
+  useEffect(() => {
+    fetchProducts()
+  }, [search, adminToken])
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this product?')) return
-    await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
-    fetchProducts()
+    try {
+      const res = await fetch(`/api/admin/inventory/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+        },
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      fetchProducts()
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete product')
+    }
   }
 
   return (
@@ -50,43 +105,43 @@ export default function AdminProducts() {
         <>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="pb-3 font-medium">Product</th>
-                  <th className="pb-3 font-medium">Category</th>
-                  <th className="pb-3 font-medium">Price</th>
-                  <th className="pb-3 font-medium">Stock</th>
-                  <th className="pb-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((p) => (
-                  <tr key={p.id} className="border-b border-border">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-radius bg-surface overflow-hidden shrink-0">
-                          <img src={p.image} alt="" className="h-full w-full object-cover" />
-                        </div>
-                        <span className="font-medium">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-muted-foreground">{p.category}</td>
-                    <td className="py-3 pr-4">RM{p.price.toFixed(2)}</td>
-                    <td className="py-3 pr-4">{p.stock}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/admin/products/${p.id}/edit`}><Pencil className="h-4 w-4" /></Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>
-                          <Trash2 className="h-4 w-4 text-error" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+               <thead>
+                 <tr className="border-b border-border text-left text-muted-foreground">
+                   <th className="pb-3 font-medium">Product</th>
+                   <th className="pb-3 font-medium">Category</th>
+                   <th className="pb-3 font-medium">Price</th>
+                   <th className="pb-3 font-medium">Stock</th>
+                   <th className="pb-3 font-medium">Actions</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {products.map((p) => (
+                   <tr key={p.id} className="border-b border-border">
+                     <td className="py-3 pr-4">
+                       <div className="flex items-center gap-3">
+                         <div className="h-10 w-10 rounded-radius bg-surface overflow-hidden shrink-0">
+                           <img src={p.image} alt="" className="h-full w-full object-cover" />
+                         </div>
+                         <span className="font-medium">{p.name}</span>
+                       </div>
+                     </td>
+                     <td className="py-3 pr-4 text-muted-foreground">{p.category}</td>
+                     <td className="py-3 pr-4">RM{p.price.toFixed(2)}</td>
+                     <td className="py-3 pr-4">{p.stock}</td>
+                     <td className="py-3">
+                       <div className="flex items-center gap-2">
+                         <Button variant="ghost" size="sm" asChild>
+                           <Link to={`/admin/products/${p.id}/edit`}><Pencil className="h-4 w-4" /></Link>
+                         </Button>
+                         <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>
+                           <Trash2 className="h-4 w-4 text-error" />
+                         </Button>
+                       </div>
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
           </div>
 
           <div className="md:hidden space-y-3">
