@@ -52,7 +52,7 @@ export default function AdminProducts() {
           price: Number(p.basePrice),
           stock: Number(p.stockQuantity),
           category: p.category,
-          image: getProductImage(p),
+          image: p.image || getProductImage(p),
           rating: 0,
           reviewCount: 0,
           createdAt: p.created_at,

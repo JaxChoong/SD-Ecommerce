@@ -17,6 +17,8 @@ export default function AdminProductForm() {
   const { adminToken } = useAuth()
   const isEdit = !!id
   const [saving, setSaving] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -46,6 +48,9 @@ export default function AdminProductForm() {
           basePrice: String(p.basePrice || ''),
           stockQuantity: String(p.stockQuantity || ''),
         })
+        if (p.image) {
+          setPreviewUrl(p.image)
+        }
       })
       .catch((err) => {
         console.error(err)
@@ -53,20 +58,36 @@ export default function AdminProductForm() {
       })
   }, [id, adminToken])
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const ext = file.name.split('.').pop()?.toLowerCase()
+      if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg') {
+        alert('Only PNG, JPG, and JPEG images are accepted.')
+        e.target.value = ''
+        setImageFile(null)
+        return
+      }
+      setImageFile(file)
+      setPreviewUrl(URL.createObjectURL(file))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     
-    // Wrap product parameters under the 'product' namespace for Rails strong params
-    const body = {
-      product: {
-        name: form.name,
-        category: form.category,
-        size: form.size,
-        basePrice: Number(form.basePrice),
-        stockQuantity: Number(form.stockQuantity),
-        description: form.description,
-      }
+    // Construct FormData instead of JSON to support file uploads
+    const formData = new FormData()
+    formData.append('product[name]', form.name)
+    formData.append('product[category]', form.category)
+    formData.append('product[size]', form.size)
+    formData.append('product[basePrice]', form.basePrice)
+    formData.append('product[stockQuantity]', form.stockQuantity)
+    formData.append('product[description]', form.description)
+    
+    if (imageFile) {
+      formData.append('product[image]', imageFile)
     }
 
     try {
@@ -75,10 +96,10 @@ export default function AdminProductForm() {
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`,
+          // Note: Browser automatically sets the Content-Type with boundary for FormData
         },
-        body: JSON.stringify(body),
+        body: formData,
       })
 
       if (!res.ok) {
@@ -136,7 +157,27 @@ export default function AdminProductForm() {
             <Label htmlFor="stockQuantity">Stock Quantity</Label>
             <Input id="stockQuantity" type="number" value={form.stockQuantity} onChange={(e) => update('stockQuantity', e.target.value)} required />
           </div>
+          
+          <div className="sm:col-span-2 space-y-2">
+            <Label htmlFor="imageFile">Product Image ({isEdit ? 'Optional to change' : 'Required'})</Label>
+            <Input 
+              id="imageFile" 
+              type="file" 
+              accept="image/png, image/jpeg, image/jpg" 
+              onChange={handleFileChange} 
+              required={!isEdit} 
+            />
+            {previewUrl && (
+              <div className="mt-2 shrink-0">
+                <p className="text-xs text-muted-foreground mb-1">Preview:</p>
+                <div className="h-32 w-32 rounded-radius bg-surface overflow-hidden border border-border">
+                  <img src={previewUrl} className="h-full w-full object-cover" alt="Product preview" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+        
         <div className="flex gap-3 pt-4">
           <Button type="submit" disabled={saving}>{saving ? 'Saving...' : (isEdit ? 'Update Product' : 'Create Product')}</Button>
           <Button type="button" variant="outline" onClick={() => navigate('/admin/products')}>Cancel</Button>

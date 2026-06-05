@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
+  resources :products, only: [:index, :show]
+
   namespace :admin do
     post 'login', to: 'sessions#create'
     delete 'logout', to: 'sessions#destroy'

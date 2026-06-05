@@ -4,57 +4,6 @@ import { db } from './db'
 const sleep = (ms = 200) => delay(ms)
 
 export const handlers = [
-  http.get('/api/products', async ({ request }) => {
-    await sleep()
-    const url = new URL(request.url)
-    const category = url.searchParams.get('category')
-    const minPrice = url.searchParams.get('minPrice')
-    const maxPrice = url.searchParams.get('maxPrice')
-    const inStock = url.searchParams.get('inStock')
-    const onSale = url.searchParams.get('onSale')
-    const sort = url.searchParams.get('sort')
-    const search = url.searchParams.get('search')
-
-    let products = db.product.getAll()
-
-    if (category && category !== 'all') {
-      products = products.filter((p) => p.category.toLowerCase() === category.toLowerCase())
-    }
-    if (minPrice) {
-      products = products.filter((p) => p.price >= Number(minPrice))
-    }
-    if (maxPrice) {
-      products = products.filter((p) => p.price <= Number(maxPrice))
-    }
-    if (inStock === 'true') {
-      products = products.filter((p) => p.stock > 0)
-    }
-    if (onSale === 'true') {
-      products = products.filter((p) => p.originalPrice != null && p.originalPrice > p.price)
-    }
-    if (search) {
-      const q = search.toLowerCase()
-      products = products.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
-      )
-    }
-
-    if (sort === 'price-asc') products.sort((a, b) => a.price - b.price)
-    else if (sort === 'price-desc') products.sort((a, b) => b.price - a.price)
-    else if (sort === 'name-asc') products.sort((a, b) => a.name.localeCompare(b.name))
-    else products.sort((a, b) => Number(b.createdAt) - Number(a.createdAt))
-
-    return HttpResponse.json(products)
-  }),
-
-  http.get('/api/products/:slug', async ({ params }) => {
-    await sleep()
-    const product = db.product.findFirst({
-      where: { slug: { equals: params.slug as string } },
-    })
-    if (!product) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json(product)
-  }),
 
   http.get('/api/cart', async () => {
     await sleep()
