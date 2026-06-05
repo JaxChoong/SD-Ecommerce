@@ -12,6 +12,13 @@ const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dress
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size']
 const shoeSizes = ['39', '40', '41', '42', '43', '44', '45']
 
+const cleanNumberString = (val: string): string => {
+  if (val.length > 1 && val.startsWith('0')) {
+    return val.replace(/^0+/, '') || '0'
+  }
+  return val
+}
+
 export default function AdminProductForm() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -241,7 +248,7 @@ export default function AdminProductForm() {
                       min="0"
                       value={shoeStocks[size]}
                       onChange={(e) => {
-                        const val = e.target.value
+                        const val = cleanNumberString(e.target.value)
                         setShoeStocks(prev => ({ ...prev, [size]: val }))
                       }}
                       required
@@ -253,24 +260,57 @@ export default function AdminProductForm() {
           ) : (
             <div className="sm:col-span-2 bg-surface p-4 rounded-radius border border-border/20 space-y-3">
               <Label className="font-semibold text-sm">Clothing Sizing Inventory (Standard Sizing)</Label>
-              <p className="text-xs text-muted-foreground">Input the stock count for each size. The total stock will be calculated automatically.</p>
+              <p className="text-xs text-muted-foreground">Input the stock count for each size. Entering a quantity for "One Size" disables other sizes, and vice versa. Total stock is calculated automatically.</p>
               <div className="grid grid-cols-4 gap-3">
-                {sizes.map((size) => (
-                  <div key={size} className="space-y-1">
-                    <Label htmlFor={`size-${size}`} className="text-xs">{size}</Label>
-                    <Input
-                      id={`size-${size}`}
-                      type="number"
-                      min="0"
-                      value={clothingStocks[size]}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setClothingStocks(prev => ({ ...prev, [size]: val }))
-                      }}
-                      required
-                    />
-                  </div>
-                ))}
+                {sizes.map((size) => {
+                  const hasSpecificSizes = Object.keys(clothingStocks).some(
+                    (key) => key !== 'One Size' && Number(clothingStocks[key]) > 0
+                  )
+                  const hasOneSize = Number(clothingStocks['One Size']) > 0
+                  const isDisabled = size === 'One Size' ? hasSpecificSizes : hasOneSize
+
+                  return (
+                    <div key={size} className="space-y-1">
+                      <Label htmlFor={`size-${size}`} className="text-xs">{size}</Label>
+                      <Input
+                        id={`size-${size}`}
+                        type="number"
+                        min="0"
+                        value={clothingStocks[size]}
+                        disabled={isDisabled}
+                        onChange={(e) => {
+                          const val = cleanNumberString(e.target.value)
+                          if (size === 'One Size') {
+                            if (Number(val) > 0) {
+                              setClothingStocks({
+                                'XS': '0',
+                                'S': '0',
+                                'M': '0',
+                                'L': '0',
+                                'XL': '0',
+                                'XXL': '0',
+                                'One Size': val,
+                              })
+                            } else {
+                              setClothingStocks((prev) => ({ ...prev, 'One Size': val }))
+                            }
+                          } else {
+                            if (Number(val) > 0) {
+                              setClothingStocks((prev) => ({
+                                ...prev,
+                                [size]: val,
+                                'One Size': '0',
+                              }))
+                            } else {
+                              setClothingStocks((prev) => ({ ...prev, [size]: val }))
+                            }
+                          }
+                        }}
+                        required
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

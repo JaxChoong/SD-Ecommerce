@@ -180,4 +180,14 @@ export const handlers = [
     await sleep()
     return HttpResponse.json(db.order.getAll())
   }),
+
+  http.get('/api/orders', async () => {
+    await sleep()
+    return HttpResponse.json(db.order.getAll())
+  }),
+
+  http.get('/api/addresses', async () => {
+    await sleep()
+    return HttpResponse.json(db.address.getAll())
+  }),
 ]
