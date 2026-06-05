@@ -4,57 +4,6 @@ import { db } from './db'
 const sleep = (ms = 200) => delay(ms)
 
 export const handlers = [
-  http.get('/api/products', async ({ request }) => {
-    await sleep()
-    const url = new URL(request.url)
-    const category = url.searchParams.get('category')
-    const minPrice = url.searchParams.get('minPrice')
-    const maxPrice = url.searchParams.get('maxPrice')
-    const inStock = url.searchParams.get('inStock')
-    const onSale = url.searchParams.get('onSale')
-    const sort = url.searchParams.get('sort')
-    const search = url.searchParams.get('search')
-
-    let products = db.product.getAll()
-
-    if (category && category !== 'all') {
-      products = products.filter((p) => p.category.toLowerCase() === category.toLowerCase())
-    }
-    if (minPrice) {
-      products = products.filter((p) => p.price >= Number(minPrice))
-    }
-    if (maxPrice) {
-      products = products.filter((p) => p.price <= Number(maxPrice))
-    }
-    if (inStock === 'true') {
-      products = products.filter((p) => p.stock > 0)
-    }
-    if (onSale === 'true') {
-      products = products.filter((p) => p.originalPrice != null && p.originalPrice > p.price)
-    }
-    if (search) {
-      const q = search.toLowerCase()
-      products = products.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
-      )
-    }
-
-    if (sort === 'price-asc') products.sort((a, b) => a.price - b.price)
-    else if (sort === 'price-desc') products.sort((a, b) => b.price - a.price)
-    else if (sort === 'name-asc') products.sort((a, b) => a.name.localeCompare(b.name))
-    else products.sort((a, b) => Number(b.createdAt) - Number(a.createdAt))
-
-    return HttpResponse.json(products)
-  }),
-
-  http.get('/api/products/:slug', async ({ params }) => {
-    await sleep()
-    const product = db.product.findFirst({
-      where: { slug: { equals: params.slug as string } },
-    })
-    if (!product) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json(product)
-  }),
 
   http.get('/api/cart', async () => {
     await sleep()
@@ -110,19 +59,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 })
   }),
 
-  http.get('/api/coupons', async ({ request }) => {
-    await sleep()
-    const url = new URL(request.url)
-    const search = url.searchParams.get('search')
-    let coupons = db.coupon.getAll()
-    if (search) {
-      const q = search.toLowerCase()
-      coupons = coupons.filter(
-        (c) => c.code.toLowerCase().includes(q) || c.description.toLowerCase().includes(q),
-      )
-    }
-    return HttpResponse.json(coupons)
-  }),
 
   http.post('/api/coupons/validate', async ({ request }) => {
     await sleep()
@@ -207,7 +143,7 @@ export const handlers = [
       discount: body.discount,
       shipping: body.shipping,
       total: body.total,
-      couponCode: body.couponCode,
+      couponCode: body.couponCode || '',
       paymentMethod: body.paymentMethod as { type: string },
       status: 'paid',
       shippingAddress: body.shippingAddress as Record<string, unknown>,
@@ -240,132 +176,18 @@ export const handlers = [
     return HttpResponse.json({ id: order.id, status: order.status })
   }),
 
-  http.get('/api/admin/products', async ({ request }) => {
+  http.get('/api/admin/orders', async () => {
     await sleep()
-    const url = new URL(request.url)
-    const category = url.searchParams.get('category')
-    const search = url.searchParams.get('search')
-    let products = db.product.getAll()
-    if (category) {
-      products = products.filter((p) => p.category === category)
-    }
-    if (search) {
-      const q = search.toLowerCase()
-      products = products.filter((p) => p.name.toLowerCase().includes(q))
-    }
-    return HttpResponse.json(products)
+    return HttpResponse.json(db.order.getAll())
   }),
 
-  http.post('/api/admin/products', async ({ request }) => {
+  http.get('/api/orders', async () => {
     await sleep()
-    const body = (await request.json()) as Record<string, unknown>
-    const product = db.product.create({
-      id: crypto.randomUUID(),
-      name: body.name as string,
-      slug: body.slug as string,
-      description: body.description as string,
-      price: Number(body.price),
-      originalPrice: body.originalPrice != null ? Number(body.originalPrice) : undefined,
-      image: (body.image as string) || '/placeholder.svg',
-      category: body.category as string,
-      rating: 0,
-      reviewCount: 0,
-      stock: Number(body.stock),
-      isNew: Boolean(body.isNew),
-      createdAt: new Date().toISOString(),
-    })
-    return HttpResponse.json(product, { status: 201 })
+    return HttpResponse.json(db.order.getAll())
   }),
 
-  http.put('/api/admin/products/:id', async ({ params, request }) => {
+  http.get('/api/addresses', async () => {
     await sleep()
-    const body = (await request.json()) as Record<string, unknown>
-    const product = db.product.update({
-      where: { id: { equals: params.id as string } },
-      data: {
-        name: body.name as string,
-        slug: body.slug as string,
-        description: body.description as string,
-        price: Number(body.price),
-        originalPrice: body.originalPrice != null ? Number(body.originalPrice) : undefined,
-        image: (body.image as string) || '/placeholder.svg',
-        category: body.category as string,
-        stock: Number(body.stock),
-        isNew: Boolean(body.isNew),
-      },
-    })
-    if (!product) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json(product)
-  }),
-
-  http.delete('/api/admin/products/:id', async ({ params }) => {
-    await sleep()
-    const deleted = db.product.delete({
-      where: { id: { equals: params.id as string } },
-    })
-    if (!deleted) return new HttpResponse(null, { status: 404 })
-    return new HttpResponse(null, { status: 204 })
-  }),
-
-  http.get('/api/admin/coupons', async ({ request }) => {
-    await sleep()
-    const url = new URL(request.url)
-    const search = url.searchParams.get('search')
-    let coupons = db.coupon.getAll()
-    if (search) {
-      const q = search.toLowerCase()
-      coupons = coupons.filter((c) => c.code.toLowerCase().includes(q))
-    }
-    return HttpResponse.json(coupons)
-  }),
-
-  http.post('/api/admin/coupons', async ({ request }) => {
-    await sleep()
-    const body = (await request.json()) as Record<string, unknown>
-    const coupon = db.coupon.create({
-      id: crypto.randomUUID(),
-      code: (body.code as string).toUpperCase(),
-      description: body.description as string,
-      discountType: body.discountType as string,
-      discountValue: Number(body.discountValue),
-      minPurchase: body.minPurchase != null ? Number(body.minPurchase) : undefined,
-      maxDiscount: body.maxDiscount != null ? Number(body.maxDiscount) : undefined,
-      expiresAt: body.expiresAt as string,
-      isActive: Boolean(body.isActive),
-      usageLimit: body.usageLimit != null ? Number(body.usageLimit) : undefined,
-      usageCount: 0,
-    })
-    return HttpResponse.json(coupon, { status: 201 })
-  }),
-
-  http.put('/api/admin/coupons/:id', async ({ params, request }) => {
-    await sleep()
-    const body = (await request.json()) as Record<string, unknown>
-    const existing = db.coupon.findFirst({ where: { id: { equals: params.id as string } } })
-    if (!existing) return new HttpResponse(null, { status: 404 })
-    const coupon = db.coupon.update({
-      where: { id: { equals: params.id as string } },
-      data: {
-        code: (body.code as string).toUpperCase(),
-        description: body.description as string,
-        discountType: body.discountType as string,
-        discountValue: Number(body.discountValue),
-        minPurchase: body.minPurchase != null ? Number(body.minPurchase) : undefined,
-        maxDiscount: body.maxDiscount != null ? Number(body.maxDiscount) : undefined,
-        expiresAt: body.expiresAt as string,
-        isActive: Boolean(body.isActive),
-        usageLimit: body.usageLimit != null ? Number(body.usageLimit) : undefined,
-      },
-    })
-    return HttpResponse.json(coupon)
-  }),
-
-  http.delete('/api/admin/coupons/:id', async ({ params }) => {
-    await sleep()
-    const deleted = db.coupon.delete({
-      where: { id: { equals: params.id as string } },
-    })
-    if (!deleted) return new HttpResponse(null, { status: 404 })
-    return new HttpResponse(null, { status: 204 })
+    return HttpResponse.json(db.address.getAll())
   }),
 ]

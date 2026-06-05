@@ -11,6 +11,7 @@ export interface Product {
   reviewCount: number;
   stock: number;
   isNew?: boolean;
+  size?: string;
   createdAt: string;
 }
 

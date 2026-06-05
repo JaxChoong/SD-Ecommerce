@@ -1,0 +1,73 @@
+class ProductsController < ApplicationController
+  # GET /products
+  def index
+    products = Product.all
+
+    if params[:category].present? && params[:category] != 'all'
+      products = products.where("LOWER(category) = ?", params[:category].downcase)
+    end
+
+    if params[:search].present?
+      q = "%#{params[:search].downcase}%"
+      products = products.where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", q, q)
+    end
+
+    if params[:sort] == 'price-asc'
+      products = products.order(basePrice: :asc)
+    elsif params[:sort] == 'price-desc'
+      products = products.order(basePrice: :desc)
+    elsif params[:sort] == 'name-asc'
+      products = products.order(name: :asc)
+    else
+      products = products.order(created_at: :desc)
+    end
+
+    mapped = products.map do |p|
+      {
+        id: p.productid.to_s,
+        name: p.name,
+        slug: p.name.downcase.strip.gsub(/[^a-z0-9]+/, '-').gsub(/-+$/, ''),
+        description: p.description || '',
+        price: p.basePrice.to_f,
+        stock: p.stockQuantity,
+        category: p.category,
+        size: p.size,
+        image: p.image || 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200&h=200&fit=crop',
+        rating: 4.5,
+        reviewCount: 12
+      }
+    end
+
+    render json: mapped
+  end
+
+  # GET /products/:id
+  def show
+    # Fetch by productid if numeric, else decode slug to match name
+    product = if params[:id].match?(/^\d+$/)
+                Product.find_by(productid: params[:id])
+              else
+                # Match slug by replacing hyphens and checking case-insensitively
+                decoded_name = params[:id].gsub('-', ' ')
+                Product.where("LOWER(name) = ?", decoded_name.strip.downcase).first
+              end
+
+    if product
+      render json: {
+        id: product.productid.to_s,
+        name: product.name,
+        slug: params[:id],
+        description: product.description || '',
+        price: product.basePrice.to_f,
+        stock: product.stockQuantity,
+        category: product.category,
+        size: product.size,
+        image: product.image || 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200&h=200&fit=crop',
+        rating: 4.5,
+        reviewCount: 12
+      }
+    else
+      render json: { error: "Product not found" }, status: :not_found
+    end
+  end
+end

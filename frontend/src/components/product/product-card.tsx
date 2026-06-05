@@ -13,6 +13,8 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart()
 
+  const hasMultipleSizes = !!(product.size && product.size.trim().startsWith('{'))
+
   const handleAddToCart = () => {
     addItem({
       id: crypto.randomUUID(),
@@ -55,9 +57,15 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="mt-auto pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <PriceDisplay price={product.price} originalPrice={product.originalPrice} />
-          <Button size="sm" onClick={handleAddToCart} className="w-full sm:w-auto">
-            Add to Cart
-          </Button>
+          {hasMultipleSizes ? (
+            <Button size="sm" asChild className="w-full sm:w-auto">
+              <Link to={`/products/${product.slug}`}>Select Size</Link>
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleAddToCart} className="w-full sm:w-auto">
+              Add to Cart
+            </Button>
+          )}
         </div>
       </div>
     </div>

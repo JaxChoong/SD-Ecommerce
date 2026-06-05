@@ -1,17 +1,26 @@
 import { Link, useLocation } from 'react-router'
-import { Home, Search, ShoppingCart, User } from 'lucide-react'
+import { Home, Search, ShoppingCart, User, Package, Tags, ClipboardList } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
 
 export function MobileNav() {
   const location = useLocation()
   const { itemCount } = useCart()
+  const { role } = useAuth()
 
-  const links = [
-    { to: '/', icon: Home, label: 'Home' },
-    { to: '/products', icon: Search, label: 'Search' },
-    { to: '/cart', icon: ShoppingCart, label: 'Cart', badge: itemCount },
-    { to: '/account', icon: User, label: 'Account' },
-  ]
+  const links = role === 'admin' 
+    ? [
+        { to: '/admin', icon: Home, label: 'Dashboard' },
+        { to: '/admin/products', icon: Package, label: 'Products' },
+        { to: '/admin/coupons', icon: Tags, label: 'Coupons' },
+        { to: '/admin/purchases', icon: ClipboardList, label: 'Purchases' },
+      ]
+    : [
+        { to: '/', icon: Home, label: 'Home' },
+        { to: '/products', icon: Search, label: 'Search' },
+        { to: '/cart', icon: ShoppingCart, label: 'Cart', badge: itemCount },
+        { to: '/account', icon: User, label: 'Account' },
+      ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background md:hidden">
@@ -23,7 +32,7 @@ export function MobileNav() {
               key={to}
               to={to}
               className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-xs transition-colors ${
-                isActive ? 'text-foreground' : 'text-muted-foreground'
+                isActive ? 'text-foreground font-medium' : 'text-muted-foreground'
               }`}
             >
               <div className="relative">

@@ -28,6 +28,8 @@ backend/tmp/storage/*
 !backend/tmp/storage/
 !backend/tmp/storage/.keep
 
+# Ignore public uploads
+backend/public/uploads/
 # Ignore key files for decrypting credentials and more.
 backend/config/*.key
 
@@ -56,3 +58,7 @@ frontend/*.ntvs*
 frontend/*.njsproj
 frontend/*.sln
 frontend/*.sw?
+
+*.pdf
+*.Identifier
+/.antigravitycli
