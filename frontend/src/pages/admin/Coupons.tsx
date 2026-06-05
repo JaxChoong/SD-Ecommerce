@@ -15,12 +15,33 @@ interface ExtendedCoupon extends Coupon {
   category: string
 }
 
+interface DbPromotion {
+  promotionid: number | string
+  promoCode: string
+  name?: string
+  type: string
+  discountValue: number | string
+  category?: string
+  endDate: string
+  IsActive: boolean | number
+}
+
 export default function AdminCoupons() {
   const { adminToken } = useAuth()
   const [coupons, setCoupons] = useState<ExtendedCoupon[]>([])
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [prevFilters, setPrevFilters] = useState({ search: '', selectedCategory: '' })
+
+  if (
+    prevFilters.search !== search ||
+    prevFilters.selectedCategory !== selectedCategory
+  ) {
+    setPrevFilters({ search, selectedCategory })
+    setCurrentPage(1)
+  }
 
   const fetchCoupons = () => {
     setLoading(true)
@@ -40,7 +61,7 @@ export default function AdminCoupons() {
         return r.json()
       })
       .then((data) => {
-        const mapped: ExtendedCoupon[] = (data || []).map((c: any) => ({
+        const mapped: ExtendedCoupon[] = (data || []).map((c: DbPromotion) => ({
           id: String(c.promotionid),
           code: c.promoCode,
           description: c.name || '',
@@ -59,7 +80,9 @@ export default function AdminCoupons() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCoupons()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, selectedCategory, adminToken])
 
   const handleDelete = async (id: string) => {
@@ -73,8 +96,9 @@ export default function AdminCoupons() {
       })
       if (!res.ok) throw new Error('Delete failed')
       fetchCoupons()
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete coupon')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete coupon'
+      alert(msg)
     }
   }
 
@@ -84,6 +108,13 @@ export default function AdminCoupons() {
   }
 
   const hasActiveFilters = search !== '' || selectedCategory !== 'all'
+
+  const itemsPerPage = 10
+  const totalPages = Math.ceil(coupons.length / itemsPerPage)
+  const paginatedCoupons = coupons.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   return (
     <Container className="py-6 sm:py-8">
@@ -145,7 +176,7 @@ export default function AdminCoupons() {
                 </tr>
               </thead>
               <tbody>
-                {coupons.map((c) => (
+                {paginatedCoupons.map((c) => (
                   <tr key={c.id} className="border-b border-border">
                     <td className="py-3 pr-4">
                       <span className="font-mono text-sm font-medium">{c.code}</span>
@@ -182,7 +213,7 @@ export default function AdminCoupons() {
           </div>
 
           <div className="md:hidden space-y-3">
-            {coupons.map((c) => (
+            {paginatedCoupons.map((c) => (
               <div key={c.id} className="bg-surface rounded-radius p-3 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -212,6 +243,38 @@ export default function AdminCoupons() {
               </div>
             ))}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border/30 pt-4 mt-6">
+              <span className="text-sm text-muted-foreground">
+                Showing {Math.min(coupons.length, (currentPage - 1) * itemsPerPage + 1)} to{' '}
+                {Math.min(coupons.length, currentPage * itemsPerPage)} of{' '}
+                {coupons.length} coupons
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm font-medium">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </Container>
