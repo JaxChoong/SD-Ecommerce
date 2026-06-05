@@ -32,7 +32,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
       <Container>
-        <div className="grid grid-cols-3 h-16 items-center">
+        <div className="flex justify-between md:grid md:grid-cols-3 h-16 items-center">
           <div className="flex items-center">
             <Link to={role === 'admin' ? '/admin' : '/'} className="text-xl font-semibold tracking-tight">
               EZShop
