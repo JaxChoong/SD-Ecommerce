@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Container } from '../../components/layout/container'
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card'
+import { Card, CardContent } from '../../components/ui/card'
 import { ClipboardList, Clock, Mail, MapPin, Phone, User } from 'lucide-react'
 
 interface OrderItem {
@@ -44,7 +44,7 @@ export default function AdminPurchases() {
       .then((data) => {
         // Sort orders by date descending
         const sorted = (data || []).sort(
-          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          (a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
         setOrders(sorted)
       })
@@ -53,6 +53,7 @@ export default function AdminPurchases() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrders()
   }, [])
 

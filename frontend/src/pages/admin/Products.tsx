@@ -6,12 +6,24 @@ import { Input } from '../../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useAuth } from '../../context/AuthContext'
 import type { Product } from '../../types'
-import { Plus, Pencil, Trash2, Filter } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 
 const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dresses']
 
+interface DbProduct {
+  productid: number | string
+  name: string
+  category: string
+  basePrice: number | string
+  stockQuantity: number | string
+  description?: string
+  image?: string
+  size?: string
+  created_at: string
+}
+
 // Helper to provide nice category-specific clothing images since the ERD has no image column
-const getProductImage = (p: any) => {
+const getProductImage = (p: { category?: string }) => {
   const cat = (p.category || '').toLowerCase()
   if (cat.includes('shirt') || cat.includes('top') || cat.includes('tee')) {
     return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=200&h=200&fit=crop'
@@ -59,7 +71,7 @@ export default function AdminProducts() {
         return r.json()
       })
       .then((data) => {
-        const mapped: Product[] = (data || []).map((p: any) => ({
+        const mapped: Product[] = (data || []).map((p: DbProduct) => ({
           id: String(p.productid),
           name: p.name,
           slug: p.name.toLowerCase().replace(/\s+/g, '-'),
@@ -79,7 +91,9 @@ export default function AdminProducts() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProducts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, selectedCategory, minPrice, maxPrice, adminToken])
 
   const handleDelete = async (id: string) => {
@@ -93,8 +107,9 @@ export default function AdminProducts() {
       })
       if (!res.ok) throw new Error('Delete failed')
       fetchProducts()
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete product')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete product'
+      alert(msg)
     }
   }
 
