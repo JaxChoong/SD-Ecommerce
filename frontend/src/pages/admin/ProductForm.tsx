@@ -344,7 +344,7 @@ export default function AdminProductForm() {
           </div>
         </div>
         
-        <div className="flex gap-3 pt-4">
+        <div className="flex justify-center sm:justify-start gap-3 pt-4">
           <Button type="submit" disabled={saving}>{saving ? 'Saving...' : (isEdit ? 'Update Product' : 'Create Product')}</Button>
           <Button type="button" variant="outline" onClick={() => navigate('/admin/products')}>Cancel</Button>
         </div>
