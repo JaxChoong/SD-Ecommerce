@@ -4,7 +4,13 @@ module Admin
 
     # GET /admin/inventory
     def index
-      products = @proxy.list_products
+      filters = {
+        category: params[:category],
+        search: params[:search],
+        minPrice: params[:minPrice],
+        maxPrice: params[:maxPrice]
+      }
+      products = @proxy.list_products(filters)
       render json: products
     end
 

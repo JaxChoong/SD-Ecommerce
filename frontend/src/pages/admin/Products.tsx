@@ -3,9 +3,12 @@ import { Link } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useAuth } from '../../context/AuthContext'
 import type { Product } from '../../types'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Filter } from 'lucide-react'
+
+const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dresses']
 
 // Helper to provide nice category-specific clothing images since the ERD has no image column
 const getProductImage = (p: any) => {
@@ -29,12 +32,24 @@ export default function AdminProducts() {
   const { adminToken } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
   const [loading, setLoading] = useState(true)
 
   const fetchProducts = () => {
     setLoading(true)
-    const params = search ? `?search=${encodeURIComponent(search)}` : ''
-    fetch(`/api/admin/inventory${params}`, {
+    
+    // Construct search and filter query parameters
+    const params = new URLSearchParams()
+    if (search.trim()) params.set('search', search.trim())
+    if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory)
+    if (minPrice) params.set('minPrice', minPrice)
+    if (maxPrice) params.set('maxPrice', maxPrice)
+
+    const queryString = params.toString() ? `?${params.toString()}` : ''
+
+    fetch(`/api/admin/inventory${queryString}`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
       },
@@ -65,7 +80,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     fetchProducts()
-  }, [search, adminToken])
+  }, [search, selectedCategory, minPrice, maxPrice, adminToken])
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this product?')) return
@@ -83,6 +98,15 @@ export default function AdminProducts() {
     }
   }
 
+  const clearFilters = () => {
+    setSearch('')
+    setSelectedCategory('all')
+    setMinPrice('')
+    setMaxPrice('')
+  }
+
+  const hasActiveFilters = search !== '' || selectedCategory !== 'all' || minPrice !== '' || maxPrice !== ''
+
   return (
     <Container className="py-6 sm:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -91,12 +115,54 @@ export default function AdminProducts() {
           <Link to="/admin/products/new"><Plus className="h-4 w-4 mr-1" /> New Product</Link>
         </Button>
       </div>
-      <Input
-        placeholder="Search products..."
-        className="max-w-xs mb-4"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+
+      {/* Search and Filters bar */}
+      <div className="grid gap-4 sm:grid-cols-4 lg:grid-cols-5 mb-6 bg-surface p-4 rounded-radius border border-border/20">
+        <div className="sm:col-span-2 lg:col-span-2">
+          <Input
+            placeholder="Search name or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            placeholder="Min RM"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="flex-1"
+          />
+          <Input
+            type="number"
+            placeholder="Max RM"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="flex-1"
+          />
+        </div>
+        <div className="flex items-center justify-end sm:col-span-4 lg:col-span-1">
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground w-full lg:w-auto">
+              Reset Filters
+            </Button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : products.length === 0 ? (
