@@ -43,7 +43,7 @@ module Admin
     end
 
     def promotion_params
-      params.require(:promotion).permit(:name, :type, :discountValue, :promoCode, :category, :startDate, :endDate, :IsActive)
+      params.require(:promotion).permit(:name, :type, :discountValue, :promoCode, :category, :startDate, :endDate, :IsActive, :usageLimit, :usageCount)
     end
   end
 end

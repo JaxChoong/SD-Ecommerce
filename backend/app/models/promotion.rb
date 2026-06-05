@@ -9,6 +9,8 @@ class Promotion < ApplicationRecord
   validates :category, presence: true
   validates :startDate, presence: true
   validates :endDate, presence: true
+  validates :usageLimit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :usageCount, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :end_date_after_start_date
 
   private

@@ -24,6 +24,8 @@ export default function AdminCouponForm() {
     category: 'all',
     expiresAt: '',
     isActive: true,
+    hasQuantityLimit: false,
+    usageLimit: '',
   })
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function AdminCouponForm() {
           category: c.category || 'all',
           expiresAt: c.endDate ? c.endDate.split('T')[0] : '',
           isActive: c.IsActive !== false,
+          hasQuantityLimit: c.usageLimit != null,
+          usageLimit: c.usageLimit != null ? String(c.usageLimit) : '',
         })
       })
       .catch((err) => {
@@ -73,6 +77,7 @@ export default function AdminCouponForm() {
         startDate: start,
         endDate: end,
         IsActive: form.isActive,
+        usageLimit: form.hasQuantityLimit && form.usageLimit ? Number(form.usageLimit) : null,
       }
     }
 
@@ -95,8 +100,9 @@ export default function AdminCouponForm() {
       }
 
       navigate('/admin/coupons')
-    } catch (err: any) {
-      alert(`Failed to save coupon: ${err.message}`)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      alert(`Failed to save coupon: ${msg}`)
     } finally {
       setSaving(false)
     }
@@ -152,6 +158,26 @@ export default function AdminCouponForm() {
             <Checkbox id="isActive" checked={form.isActive} onCheckedChange={(c) => update('isActive', c === true)} />
             <Label htmlFor="isActive" className="cursor-pointer">Active Campaign</Label>
           </div>
+
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <Checkbox id="hasQuantityLimit" checked={form.hasQuantityLimit} onCheckedChange={(c) => update('hasQuantityLimit', c === true)} />
+            <Label htmlFor="hasQuantityLimit" className="cursor-pointer">Limit coupon redemption count</Label>
+          </div>
+
+          {form.hasQuantityLimit && (
+            <div className="sm:col-span-2">
+              <Label htmlFor="usageLimit">Maximum Quantity Limit</Label>
+              <Input
+                id="usageLimit"
+                type="number"
+                min="1"
+                placeholder="E.g., 100"
+                value={form.usageLimit}
+                onChange={(e) => update('usageLimit', e.target.value.replace(/^0+/, '') || '0')}
+                required
+              />
+            </div>
+          )}
         </div>
         <div className="flex gap-3 pt-4">
           <Button type="submit" disabled={saving}>{saving ? 'Saving...' : (isEdit ? 'Update Coupon' : 'Create Coupon')}</Button>

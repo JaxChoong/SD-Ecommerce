@@ -24,6 +24,8 @@ interface DbPromotion {
   category?: string
   endDate: string
   IsActive: boolean | number
+  usageLimit?: number | null
+  usageCount?: number
 }
 
 export default function AdminCoupons() {
@@ -70,8 +72,8 @@ export default function AdminCoupons() {
           category: c.category || 'all',
           expiresAt: c.endDate,
           isActive: Boolean(c.IsActive),
-          usageCount: 0,
-          usageLimit: undefined,
+          usageCount: Number(c.usageCount || 0),
+          usageLimit: c.usageLimit != null ? Number(c.usageLimit) : undefined,
         }))
         setCoupons(mapped)
       })
@@ -170,6 +172,7 @@ export default function AdminCoupons() {
                   <th className="pb-3 font-medium">Category Target</th>
                   <th className="pb-3 font-medium">Discount</th>
                   <th className="pb-3 font-medium">Description</th>
+                  <th className="pb-3 font-medium">Redemptions</th>
                   <th className="pb-3 font-medium">Expires At</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Actions</th>
@@ -188,6 +191,9 @@ export default function AdminCoupons() {
                       {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`}
                     </td>
                     <td className="py-3 pr-4 text-muted-foreground">{c.description}</td>
+                    <td className="py-3 pr-4 text-muted-foreground font-mono">
+                      {c.usageCount} / {c.usageLimit != null ? c.usageLimit : '∞'}
+                    </td>
                     <td className="py-3 pr-4 text-muted-foreground">
                       {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}
                     </td>
@@ -222,8 +228,8 @@ export default function AdminCoupons() {
                       {c.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`} • Target: <span className="capitalize">{c.category === 'all' ? 'Global' : c.category}</span>
+                  <p className="text-xs text-muted-foreground truncate font-mono">
+                    {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`} • Target: <span className="capitalize">{c.category === 'all' ? 'Global' : c.category}</span> • Used: {c.usageCount}/{c.usageLimit != null ? c.usageLimit : '∞'}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {c.description}
