@@ -143,7 +143,7 @@ export const handlers = [
       discount: body.discount,
       shipping: body.shipping,
       total: body.total,
-      couponCode: body.couponCode,
+      couponCode: body.couponCode || '',
       paymentMethod: body.paymentMethod as { type: string },
       status: 'paid',
       shippingAddress: body.shippingAddress as Record<string, unknown>,
