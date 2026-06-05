@@ -9,12 +9,12 @@ import { SlidersHorizontal, ChevronDown, X } from 'lucide-react'
 
 const categories = [
   { value: 'all', label: 'All' },
-  { value: 'Lighting', label: 'Lighting' },
-  { value: 'Home', label: 'Home' },
-  { value: 'Electronics', label: 'Electronics' },
-  { value: 'Stationery', label: 'Stationery' },
+  { value: 'Shirts', label: 'Shirts' },
+  { value: 'Pants', label: 'Pants' },
+  { value: 'Shoes', label: 'Shoes' },
+  { value: 'Jackets', label: 'Jackets' },
   { value: 'Accessories', label: 'Accessories' },
-  { value: 'Kitchen', label: 'Kitchen' },
+  { value: 'Dresses', label: 'Dresses' },
 ]
 
 const sortOptions = [

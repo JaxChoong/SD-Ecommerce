@@ -59,19 +59,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 })
   }),
 
-  http.get('/api/coupons', async ({ request }) => {
-    await sleep()
-    const url = new URL(request.url)
-    const search = url.searchParams.get('search')
-    let coupons = db.coupon.getAll()
-    if (search) {
-      const q = search.toLowerCase()
-      coupons = coupons.filter(
-        (c) => c.code.toLowerCase().includes(q) || c.description.toLowerCase().includes(q),
-      )
-    }
-    return HttpResponse.json(coupons)
-  }),
 
   http.post('/api/coupons/validate', async ({ request }) => {
     await sleep()

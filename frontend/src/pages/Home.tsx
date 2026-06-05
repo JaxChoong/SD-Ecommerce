@@ -6,12 +6,12 @@ import { ProductSkeleton } from '../components/product/product-skeleton'
 import { useProducts } from '../hooks/useProducts'
 
 const categories = [
-  { name: 'Lighting', slug: 'Lighting' },
-  { name: 'Home', slug: 'Home' },
-  { name: 'Electronics', slug: 'Electronics' },
-  { name: 'Stationery', slug: 'Stationery' },
+  { name: 'Shirts', slug: 'Shirts' },
+  { name: 'Pants', slug: 'Pants' },
+  { name: 'Shoes', slug: 'Shoes' },
+  { name: 'Jackets', slug: 'Jackets' },
   { name: 'Accessories', slug: 'Accessories' },
-  { name: 'Kitchen', slug: 'Kitchen' },
+  { name: 'Dresses', slug: 'Dresses' },
 ]
 
 export default function Home() {
