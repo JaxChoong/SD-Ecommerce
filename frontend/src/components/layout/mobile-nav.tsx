@@ -13,7 +13,7 @@ export function MobileNav() {
         { to: '/admin', icon: Home, label: 'Dashboard' },
         { to: '/admin/products', icon: Package, label: 'Products' },
         { to: '/admin/coupons', icon: Tags, label: 'Coupons' },
-        { to: '/admin/purchases', icon: ClipboardList, label: 'Purchases' },
+        { to: '/admin/purchases', icon: ClipboardList, label: 'Recent Orders' },
       ]
     : [
         { to: '/', icon: Home, label: 'Home' },
@@ -24,14 +24,14 @@ export function MobileNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background md:hidden">
-      <div className="flex items-center justify-around h-14">
+      <div className="flex w-full items-center h-14">
         {links.map(({ to, icon: Icon, label, badge }) => {
           const isActive = location.pathname === to
           return (
             <Link
               key={to}
               to={to}
-              className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-xs transition-colors ${
+              className={`relative flex-1 h-full flex flex-col items-center justify-center gap-0.5 text-[10px] sm:text-xs transition-colors ${
                 isActive ? 'text-foreground font-medium' : 'text-muted-foreground'
               }`}
             >
@@ -43,7 +43,7 @@ export function MobileNav() {
                   </span>
                 )}
               </div>
-              <span>{label}</span>
+              <span className="whitespace-nowrap">{label}</span>
             </Link>
           )
         })}
