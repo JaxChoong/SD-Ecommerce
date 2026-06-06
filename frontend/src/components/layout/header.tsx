@@ -45,7 +45,7 @@ export function Header() {
                 <Link to="/admin" className="hover:text-foreground transition-colors font-medium">Dashboard</Link>
                 <Link to="/admin/products" className="hover:text-foreground transition-colors font-medium">Products</Link>
                 <Link to="/admin/coupons" className="hover:text-foreground transition-colors font-medium">Coupons</Link>
-                <Link to="/admin/purchases" className="hover:text-foreground transition-colors font-medium">Purchases</Link>
+                <Link to="/admin/purchases" className="hover:text-foreground transition-colors font-medium">Recent Orders</Link>
               </>
             ) : (
               <>
@@ -88,11 +88,11 @@ export function Header() {
                         <Link to="/admin" className="block px-4 py-2 text-sm hover:bg-surface font-medium" onClick={() => setAdminOpen(false)}>Admin Dashboard</Link>
                         <Link to="/admin/products" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Manage Products</Link>
                         <Link to="/admin/coupons" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Manage Coupons</Link>
-                        <Link to="/admin/purchases" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Recent Purchases</Link>
+                        <Link to="/admin/purchases" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Recent Orders</Link>
                         <div className="border-t border-border my-1" />
                         <button
                           onClick={handleLogout}
-                          className="flex items-center gap-1.5 w-full text-left px-4 py-2 text-sm text-error hover:bg-surface"
+                          className="flex items-center gap-1.5 w-full text-left px-4 py-2 text-sm text-error hover:bg-surface cursor-pointer"
                         >
                           <LogOut className="h-4 w-4" /> Sign Out
                         </button>
@@ -158,10 +158,10 @@ export function Header() {
                   <Link to="/admin" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
                   <Link to="/admin/products" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Products</Link>
                   <Link to="/admin/coupons" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Coupons</Link>
-                  <Link to="/admin/purchases" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Purchases</Link>
+                  <Link to="/admin/purchases" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Recent Orders</Link>
                   <button
                     onClick={() => { handleLogout(); setMenuOpen(false); }}
-                    className="flex items-center gap-1.5 px-2 py-2 text-sm text-left text-error hover:text-primary"
+                    className="flex items-center gap-1.5 px-2 py-2 text-sm text-left text-error hover:text-primary cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" /> Sign Out
                   </button>
