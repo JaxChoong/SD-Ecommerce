@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 import { Clock, Mail, MapPin, Phone, User } from "lucide-react";
+import { PricingSummary } from "../../components/common/pricing-summary";
 
 interface OrderItem {
   productId: string;
@@ -154,11 +155,17 @@ export default function AdminPurchases() {
       ) : (
         <div className="space-y-6">
           <div className="space-y-6">
-            {paginatedOrders.map((order) => (
-              <Card
-                key={order.id}
-                className="border border-border/40 overflow-hidden shadow-sm"
-              >
+            {paginatedOrders.map((order) => {
+              const isShippingPromo = (order.discountTarget === "shipping" || order.couponCode?.toUpperCase() === "FREESHIP") && order.subtotal < 100;
+              const shippingDiscount = isShippingPromo ? 10 : 0;
+              const displayedShipping = isShippingPromo ? 0 : order.shipping;
+              const displayedDiscount = isShippingPromo ? 0 : order.discount;
+
+              return (
+                <Card
+                  key={order.id}
+                  className="border border-border/40 overflow-hidden shadow-sm"
+                >
                 <div className="bg-surface/50 border-b border-border/40 p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground font-mono">
@@ -224,53 +231,16 @@ export default function AdminPurchases() {
                     </div>
 
                     <div className="border-t border-border/30 pt-3 flex flex-col items-end gap-1.5 text-sm">
-                      <div className="flex justify-between w-full max-w-xs text-muted-foreground">
-                        <span>Subtotal</span>
-                        <span>RM{order.subtotal.toFixed(2)}</span>
-                      </div>
-                      {order.discount > 0 && (
-                        <div className="flex justify-between w-full max-w-xs text-success">
-                          <span>
-                            Discount{" "}
-                            {order.couponCode ? `(${order.couponCode})` : ""}
-                          </span>
-                          <span>-RM{order.discount.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {(order.discountTarget === "shipping" ||
-                        order.couponCode?.toUpperCase() === "FREESHIP") &&
-                      order.subtotal < 100 ? (
-                        <>
-                          <div className="flex justify-between w-full max-w-xs text-success">
-                            <span>Shipping Discount ({order.couponCode})</span>
-                            <span>-RM10.00</span>
-                          </div>
-                          <div className="flex justify-between w-full max-w-xs text-muted-foreground">
-                            <span>Shipping</span>
-                            <span>
-                              <span className="line-through mr-1.5 text-muted-foreground/60">
-                                RM10.00
-                              </span>
-                              <span className="text-success font-medium">
-                                Free
-                              </span>
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex justify-between w-full max-w-xs text-muted-foreground">
-                          <span>Shipping</span>
-                          <span>
-                            {order.shipping === 0
-                              ? "Free"
-                              : `RM${order.shipping.toFixed(2)}`}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between w-full max-w-xs font-semibold text-foreground border-t border-border/30 pt-1.5 mt-1">
-                        <span>Total Paid</span>
-                        <span>RM{order.total.toFixed(2)}</span>
-                      </div>
+                      <PricingSummary
+                        subtotal={order.subtotal}
+                        discount={displayedDiscount}
+                        shippingDiscount={shippingDiscount}
+                        shipping={displayedShipping}
+                        total={order.total}
+                        couponCode={order.couponCode}
+                        totalLabel="Total Paid"
+                        className="w-full max-w-xs"
+                      />
                     </div>
                   </div>
 
@@ -330,8 +300,9 @@ export default function AdminPurchases() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
 
           {/* Pagination Controls */}

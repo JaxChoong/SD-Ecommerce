@@ -25,20 +25,12 @@ module Admin
       product_data = product_params.to_h
 
       if params[:product] && params[:product][:image].respond_to?(:read)
-        uploaded_file = params[:product][:image]
-        ext = File.extname(uploaded_file.original_filename).downcase
-        unless ['.png', '.jpg', '.jpeg'].include?(ext)
-          render json: { errors: ["Image must be a PNG, JPG, or JPEG file"] }, status: :unprocessable_entity
+        begin
+          product_data['image'] = upload_image(params[:product][:image])
+        rescue StandardError => e
+          render json: { errors: [e.message] }, status: :unprocessable_entity
           return
         end
-
-        directory = Rails.root.join('public', 'uploads')
-        FileUtils.mkdir_p(directory)
-        filename = "#{SecureRandom.uuid}#{ext}"
-        File.open(directory.join(filename), 'wb') do |file|
-          file.write(uploaded_file.read)
-        end
-        product_data['image'] = "/uploads/#{filename}"
       else
         render json: { errors: ["Image file is required"] }, status: :unprocessable_entity
         return
@@ -53,20 +45,12 @@ module Admin
       product_data = product_params.to_h
 
       if params[:product] && params[:product][:image].respond_to?(:read)
-        uploaded_file = params[:product][:image]
-        ext = File.extname(uploaded_file.original_filename).downcase
-        unless ['.png', '.jpg', '.jpeg'].include?(ext)
-          render json: { errors: ["Image must be a PNG, JPG, or JPEG file"] }, status: :unprocessable_entity
+        begin
+          product_data['image'] = upload_image(params[:product][:image])
+        rescue StandardError => e
+          render json: { errors: [e.message] }, status: :unprocessable_entity
           return
         end
-
-        directory = Rails.root.join('public', 'uploads')
-        FileUtils.mkdir_p(directory)
-        filename = "#{SecureRandom.uuid}#{ext}"
-        File.open(directory.join(filename), 'wb') do |file|
-          file.write(uploaded_file.read)
-        end
-        product_data['image'] = "/uploads/#{filename}"
       else
         # If it's a string, keep it. Otherwise, remove it so we don't nullify
         unless product_data['image'].is_a?(String) && product_data['image'].present?
@@ -85,6 +69,21 @@ module Admin
     end
 
     private
+
+    def upload_image(uploaded_file)
+      ext = File.extname(uploaded_file.original_filename).downcase
+      unless ['.png', '.jpg', '.jpeg'].include?(ext)
+        raise StandardError, "Image must be a PNG, JPG, or JPEG file"
+      end
+
+      directory = Rails.root.join('public', 'uploads')
+      FileUtils.mkdir_p(directory)
+      filename = "#{SecureRandom.uuid}#{ext}"
+      File.open(directory.join(filename), 'wb') do |file|
+        file.write(uploaded_file.read)
+      end
+      "/uploads/#{filename}"
+    end
 
     def set_proxy
       @proxy = build_proxy(Admin::InventoryService.new)
