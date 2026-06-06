@@ -11,7 +11,7 @@ import type { Address, PaymentMethod } from '../types'
 
 export default function Checkout() {
   const navigate = useNavigate()
-  const { items, subtotal, discount, shipping, total, couponCode, clearCart } = useCart()
+  const { items, subtotal, discount, shipping, total, couponCode, appliedCoupon, clearCart } = useCart()
   const [step, setStep] = useState<'shipping' | 'payment' | 'review'>('shipping')
   const [shippingAddress, setShippingAddress] = useState<Address>({
     id: '', fullName: '', phone: '', email: '',
@@ -48,6 +48,7 @@ export default function Checkout() {
           shipping,
           total,
           couponCode,
+          discountTarget: appliedCoupon?.discount?.target || 'base_price',
           paymentMethod,
           shippingAddress,
         }),

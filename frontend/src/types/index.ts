@@ -36,6 +36,7 @@ export interface Coupon {
   isActive: boolean;
   usageLimit?: number;
   usageCount: number;
+  discountTarget: 'base_price' | 'shipping';
 }
 
 export interface Address {
@@ -80,6 +81,7 @@ export interface CouponValidation {
     type: 'percentage' | 'fixed';
     value: number;
     appliedAmount: number;
+    target: 'base_price' | 'shipping';
   };
 }
 

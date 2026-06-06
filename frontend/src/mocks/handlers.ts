@@ -118,7 +118,12 @@ export const handlers = [
 
     return HttpResponse.json({
       isValid: true,
-      discount: { type: coupon.discountType, value: coupon.discountValue, appliedAmount },
+      discount: {
+        type: coupon.discountType,
+        value: coupon.discountValue,
+        appliedAmount,
+        target: (coupon.discountTarget || 'base_price') as 'base_price' | 'shipping'
+      },
     })
   }),
 
@@ -131,6 +136,7 @@ export const handlers = [
       shipping: number
       total: number
       couponCode?: string
+      discountTarget?: string
       paymentMethod: { type: string }
       shippingAddress: Record<string, unknown>
     }
@@ -144,6 +150,7 @@ export const handlers = [
       shipping: body.shipping,
       total: body.total,
       couponCode: body.couponCode || '',
+      discountTarget: body.discountTarget || 'base_price',
       paymentMethod: body.paymentMethod as { type: string },
       status: 'paid',
       shippingAddress: body.shippingAddress as Record<string, unknown>,

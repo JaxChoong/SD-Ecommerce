@@ -3,7 +3,7 @@ import { Separator } from '../ui/separator'
 import { ImageWithFallback } from '../common/image-with-fallback'
 
 export function OrderSummary() {
-  const { items, subtotal, discount, shipping, total } = useCart()
+  const { items, subtotal, discount, shippingDiscount, shipping, total, couponCode } = useCart()
 
   return (
     <div className="bg-surface rounded-radius p-6 space-y-4">
@@ -38,9 +38,30 @@ export function OrderSummary() {
             <span>-RM{discount.toFixed(2)}</span>
           </div>
         )}
+        {shippingDiscount > 0 && (
+          <div className="flex justify-between text-success">
+            <span>Shipping Discount {couponCode ? `(${couponCode})` : ''}</span>
+            <span>-RM{shippingDiscount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="text-muted-foreground">Shipping</span>
-          <span>{shipping === 0 ? 'Free' : `RM${shipping.toFixed(2)}`}</span>
+          <span>
+            {shippingDiscount > 0 ? (
+              <>
+                <span className="line-through mr-1.5 text-muted-foreground/60">RM{(shipping + shippingDiscount).toFixed(2)}</span>
+                {shipping === 0 ? (
+                  <span className="text-success font-medium">Free</span>
+                ) : (
+                  `RM${shipping.toFixed(2)}`
+                )}
+              </>
+            ) : shipping === 0 ? (
+              'Free'
+            ) : (
+              `RM${shipping.toFixed(2)}`
+            )}
+          </span>
         </div>
       </div>
       <Separator />

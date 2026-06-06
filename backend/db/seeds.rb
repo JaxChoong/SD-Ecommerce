@@ -128,7 +128,8 @@ promotions_data = [
     endDate: now + 30.days,
     IsActive: true,
     usageLimit: 500,
-    usageCount: 42
+    usageCount: 42,
+    discountTarget: "base_price"
   },
   {
     promoCode: "SHOES15",
@@ -140,7 +141,8 @@ promotions_data = [
     endDate: now + 14.days,
     IsActive: true,
     usageLimit: 100,
-    usageCount: 18
+    usageCount: 18,
+    discountTarget: "base_price"
   },
   {
     promoCode: "FREESHIP",
@@ -152,7 +154,8 @@ promotions_data = [
     endDate: now + 90.days,
     IsActive: true,
     usageLimit: nil,
-    usageCount: 212
+    usageCount: 212,
+    discountTarget: "shipping"
   },
   {
     promoCode: "FLASH50",
@@ -164,7 +167,8 @@ promotions_data = [
     endDate: now - 1.day, # Expired promotion
     IsActive: true,
     usageLimit: 50,
-    usageCount: 50
+    usageCount: 50,
+    discountTarget: "base_price"
   },
   {
     promoCode: "DRESS30",
@@ -176,7 +180,8 @@ promotions_data = [
     endDate: now + 7.days,
     IsActive: false, # Inactive promotion
     usageLimit: 200,
-    usageCount: 0
+    usageCount: 0,
+    discountTarget: "base_price"
   }
 ]
 

@@ -62,6 +62,7 @@ interface CartContextType {
   itemCount: number
   subtotal: number
   discount: number
+  shippingDiscount: number
   shipping: number
   total: number
   addItem: (item: CartItem) => void
@@ -85,17 +86,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return Math.round(state.items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100
   }, [state.items])
 
+  const isFreeShippingCoupon = useMemo(() => {
+    return !!(state.appliedCoupon?.isValid && state.appliedCoupon.discount?.target === 'shipping')
+  }, [state.appliedCoupon])
+
+  const baseShipping = useMemo(() => {
+    if (subtotal >= 100) return 0
+    return subtotal > 0 ? 10 : 0
+  }, [subtotal])
+
+  const shippingDiscount = useMemo(() => {
+    if (isFreeShippingCoupon && state.appliedCoupon?.isValid && state.appliedCoupon.discount) {
+      return Math.min(baseShipping, state.appliedCoupon.discount.value)
+    }
+    return 0
+  }, [baseShipping, isFreeShippingCoupon, state.appliedCoupon])
+
   const discount = useMemo(() => {
+    if (isFreeShippingCoupon) return 0
     if (state.appliedCoupon?.isValid && state.appliedCoupon.discount) {
       return state.appliedCoupon.discount.appliedAmount
     }
     return 0
-  }, [state.appliedCoupon])
+  }, [state.appliedCoupon, isFreeShippingCoupon])
 
   const shipping = useMemo(() => {
-    if (subtotal >= 100) return 0
-    return subtotal > 0 ? 10 : 0
-  }, [subtotal])
+    return baseShipping - shippingDiscount
+  }, [baseShipping, shippingDiscount])
 
   const total = useMemo(() => {
     return Math.round((subtotal - discount + shipping) * 100) / 100
@@ -124,6 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         itemCount,
         subtotal,
         discount,
+        shippingDiscount,
         shipping,
         total,
         addItem,
@@ -139,6 +157,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
   const ctx = useContext(CartContext)
   if (!ctx) throw new Error('useCart must be used within CartProvider')

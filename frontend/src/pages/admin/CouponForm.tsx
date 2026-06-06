@@ -26,6 +26,7 @@ export default function AdminCouponForm() {
     isActive: true,
     hasQuantityLimit: false,
     usageLimit: '',
+    discountTarget: 'base_price' as 'base_price' | 'shipping',
   })
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function AdminCouponForm() {
           isActive: c.IsActive !== false,
           hasQuantityLimit: c.usageLimit != null,
           usageLimit: c.usageLimit != null ? String(c.usageLimit) : '',
+          discountTarget: (c.discountTarget || 'base_price') as 'base_price' | 'shipping',
         })
       })
       .catch((err) => {
@@ -73,11 +75,12 @@ export default function AdminCouponForm() {
         name: form.description,
         type: form.discountType,
         discountValue: Number(form.discountValue),
-        category: form.category,
+        category: form.discountTarget === 'shipping' ? 'all' : form.category,
         startDate: start,
         endDate: end,
         IsActive: form.isActive,
         usageLimit: form.hasQuantityLimit && form.usageLimit ? Number(form.usageLimit) : null,
+        discountTarget: form.discountTarget,
       }
     }
 
@@ -129,11 +132,21 @@ export default function AdminCouponForm() {
           </div>
           <div>
             <Label htmlFor="category">Applicable Clothing Category</Label>
-            <Select value={form.category} onValueChange={(v) => update('category', v)}>
+            <Select value={form.discountTarget === 'shipping' ? 'all' : form.category} onValueChange={(v) => update('category', v)} disabled={form.discountTarget === 'shipping'}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories (Global)</SelectItem>
                 {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="discountTarget">Discount Target</Label>
+            <Select value={form.discountTarget} onValueChange={(v) => update('discountTarget', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="base_price">Products (Base Price)</SelectItem>
+                <SelectItem value="shipping">Shipping Fee</SelectItem>
               </SelectContent>
             </Select>
           </div>

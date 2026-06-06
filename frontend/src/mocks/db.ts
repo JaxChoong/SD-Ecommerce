@@ -36,6 +36,7 @@ export const db = factory({
     isActive: Boolean,
     usageLimit: Number,
     usageCount: Number,
+    discountTarget: String,
   },
   order: {
     id: primaryKey(String),
@@ -45,6 +46,7 @@ export const db = factory({
     shipping: Number,
     total: Number,
     couponCode: String,
+    discountTarget: String,
     paymentMethod: Object,
     status: String,
     shippingAddress: Object,
