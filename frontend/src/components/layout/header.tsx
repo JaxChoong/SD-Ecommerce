@@ -59,7 +59,7 @@ export function Header() {
             {/* Search option only for customers */}
             {role !== 'admin' && (
               <button
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 onClick={() => setSearchOpen(!searchOpen)}
                 aria-label="Search"
               >
@@ -71,7 +71,7 @@ export function Header() {
             <div className="relative">
               <button
                 onClick={() => setAdminOpen(!adminOpen)}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 aria-label="Account"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user">
@@ -125,7 +125,7 @@ export function Header() {
             )}
 
             <button
-              className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+              className="md:hidden p-2 text-muted-foreground hover:text-foreground cursor-pointer"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Menu"
             >
