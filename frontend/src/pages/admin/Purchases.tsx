@@ -22,6 +22,7 @@ interface Order {
   shipping: number
   total: number
   couponCode?: string
+  discountTarget?: 'base_price' | 'shipping'
   paymentMethod: { type: string; provider?: string }
   status: 'pending' | 'paid' | 'failed' | 'expired'
   shippingAddress: {
@@ -197,10 +198,26 @@ export default function AdminPurchases() {
                           <span>-RM{order.discount.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between w-full max-w-xs text-muted-foreground">
-                        <span>Shipping</span>
-                        <span>RM{order.shipping.toFixed(2)}</span>
-                      </div>
+                      {((order.discountTarget === 'shipping' || order.couponCode?.toUpperCase() === 'FREESHIP') && order.subtotal < 100) ? (
+                        <>
+                          <div className="flex justify-between w-full max-w-xs text-success">
+                            <span>Shipping Discount ({order.couponCode})</span>
+                            <span>-RM10.00</span>
+                          </div>
+                          <div className="flex justify-between w-full max-w-xs text-muted-foreground">
+                            <span>Shipping</span>
+                            <span>
+                              <span className="line-through mr-1.5 text-muted-foreground/60">RM10.00</span>
+                              <span className="text-success font-medium">Free</span>
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between w-full max-w-xs text-muted-foreground">
+                          <span>Shipping</span>
+                          <span>{order.shipping === 0 ? 'Free' : `RM${order.shipping.toFixed(2)}`}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between w-full max-w-xs font-semibold text-foreground border-t border-border/30 pt-1.5 mt-1">
                         <span>Total Paid</span>
                         <span>RM{order.total.toFixed(2)}</span>

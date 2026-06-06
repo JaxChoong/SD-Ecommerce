@@ -16,7 +16,8 @@ class PromotionsController < ApplicationController
         discountValue: c.discountValue.to_f,
         category: c.category,
         expiresAt: c.endDate,
-        isActive: c.IsActive
+        isActive: c.IsActive,
+        discountTarget: c.discountTarget
       }
     end
 

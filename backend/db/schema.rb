@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_05_134701) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_06_033744) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,6 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_134701) do
     t.boolean "IsActive", default: true, null: false
     t.string "category", default: "all"
     t.datetime "created_at", null: false
+    t.string "discountTarget", default: "base_price", null: false
     t.decimal "discountValue", precision: 10, scale: 2, null: false
     t.datetime "endDate", null: false
     t.string "name", null: false

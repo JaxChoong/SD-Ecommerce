@@ -152,31 +152,37 @@ export function seed() {
     id: 'c1', code: 'SAVE20', description: 'Save 20%% on your order',
     discountType: 'percentage', discountValue: 20, minPurchase: 100, maxDiscount: 150,
     expiresAt: '2027-12-31T23:59:59Z', isActive: true, usageLimit: 1000, usageCount: 45,
+    discountTarget: 'base_price',
   })
   db.coupon.create({
     id: 'c2', code: 'FREESHIP', description: 'Free shipping on your order',
     discountType: 'fixed', discountValue: 15, minPurchase: 50,
     expiresAt: '2027-12-31T23:59:59Z', isActive: true, usageLimit: 500, usageCount: 120,
+    discountTarget: 'shipping',
   })
   db.coupon.create({
     id: 'c3', code: 'WELCOME10', description: '10%% off your first purchase',
     discountType: 'percentage', discountValue: 10, maxDiscount: 50,
     expiresAt: '2027-12-31T23:59:59Z', isActive: true, usageLimit: 2000, usageCount: 340,
+    discountTarget: 'base_price',
   })
   db.coupon.create({
     id: 'c4', code: 'BULK30', description: '30%% off for bulk orders',
     discountType: 'percentage', discountValue: 30, minPurchase: 200, maxDiscount: 300,
     expiresAt: '2027-12-31T23:59:59Z', isActive: true, usageLimit: 200, usageCount: 18,
+    discountTarget: 'base_price',
   })
   db.coupon.create({
     id: 'c5', code: 'NEWUSER', description: '15%% off for new users',
     discountType: 'percentage', discountValue: 15, maxDiscount: 75,
     expiresAt: '2027-12-31T23:59:59Z', isActive: true, usageLimit: 3000, usageCount: 560,
+    discountTarget: 'base_price',
   })
   db.coupon.create({
     id: 'c6', code: 'FLASH50', description: 'RM50 off on orders above RM300',
     discountType: 'fixed', discountValue: 50, minPurchase: 300,
     expiresAt: '2027-12-31T23:59:59Z', isActive: true, usageLimit: 100, usageCount: 12,
+    discountTarget: 'base_price',
   })
 
   db.address.create({

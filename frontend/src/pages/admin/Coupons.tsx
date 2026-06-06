@@ -26,6 +26,7 @@ interface DbPromotion {
   IsActive: boolean | number
   usageLimit?: number | null
   usageCount?: number
+  discountTarget?: string
 }
 
 export default function AdminCoupons() {
@@ -74,6 +75,7 @@ export default function AdminCoupons() {
           isActive: Boolean(c.IsActive),
           usageCount: Number(c.usageCount || 0),
           usageLimit: c.usageLimit != null ? Number(c.usageLimit) : undefined,
+          discountTarget: (c.discountTarget || 'base_price') as 'base_price' | 'shipping',
         }))
         setCoupons(mapped)
       })
@@ -169,7 +171,7 @@ export default function AdminCoupons() {
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="pb-3 font-medium">Code</th>
-                  <th className="pb-3 font-medium">Category Target</th>
+                  <th className="pb-3 font-medium">Discount Target</th>
                   <th className="pb-3 font-medium">Discount</th>
                   <th className="pb-3 font-medium">Description</th>
                   <th className="pb-3 font-medium">Redemptions</th>
@@ -185,7 +187,7 @@ export default function AdminCoupons() {
                       <span className="font-mono text-sm font-medium">{c.code}</span>
                     </td>
                     <td className="py-3 pr-4 text-muted-foreground capitalize">
-                      {c.category === 'all' ? 'Global (All)' : c.category}
+                      {c.discountTarget === 'shipping' ? 'Shipping Fee' : c.category === 'all' ? 'Global (All)' : c.category}
                     </td>
                     <td className="py-3 pr-4">
                       {c.discountType === 'percentage' ? `${c.discountValue}%` : `RM${c.discountValue}`}
@@ -247,9 +249,9 @@ export default function AdminCoupons() {
                       </span>
                     </div>
                     <div className="flex justify-between py-0.5 border-b border-border/5">
-                      <span>Category Target</span>
+                      <span>Discount Target</span>
                       <span className="capitalize text-foreground font-medium">
-                        {c.category === 'all' ? 'Global (All)' : c.category}
+                        {c.discountTarget === 'shipping' ? 'Shipping Fee' : c.category === 'all' ? 'Global (All)' : c.category}
                       </span>
                     </div>
                     <div className="flex justify-between py-0.5 border-b border-border/5">

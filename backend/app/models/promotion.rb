@@ -4,6 +4,7 @@ class Promotion < ApplicationRecord
 
   validates :name, presence: true
   validates :type, presence: true, inclusion: { in: %w[percentage fixed] }
+  validates :discountTarget, presence: true, inclusion: { in: %w[base_price shipping] }
   validates :discountValue, presence: true, numericality: { greater_than: 0 }
   validates :promoCode, presence: true, uniqueness: true
   validates :category, presence: true
