@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
+import type { CardFormValues } from '../../types'
 
 interface CreditCardFormProps {
-  onSaveCard?: (saved: boolean) => void
+  values: CardFormValues
+  onChange: (next: CardFormValues) => void
   onValidityChange?: (isValid: boolean) => void
 }
 
@@ -25,7 +27,8 @@ function luhnCheck(cardNumber: string): boolean {
   return sum % 10 === 0
 }
 
-function detectCardType(number: string): string {
+// eslint-disable-next-line react-refresh/only-export-components
+export function detectCardType(number: string): 'Visa' | 'Mastercard' | 'Amex' | '' {
   const cleaned = number.replace(/\D/g, '')
   if (/^4/.test(cleaned)) return 'Visa'
   if (/^5[1-5]/.test(cleaned)) return 'Mastercard'
@@ -54,19 +57,18 @@ export function isCreditCardValid(values: { number: string; holder: string; expi
   return true
 }
 
-export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormProps) {
-  const [number, setNumber] = useState('')
-  const [holder, setHolder] = useState('')
-  const [expiry, setExpiry] = useState('')
+export function CreditCardForm({ values, onChange, onValidityChange }: CreditCardFormProps) {
+  // CVV is intentionally component-local — never leaves the form, never sent to backend
   const [cvv, setCvv] = useState('')
-  const [saveCard, setSaveCard] = useState(false)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const cardType = detectCardType(number)
-  const digits = number.replace(/\D/g, '')
+  const cardType = detectCardType(values.number)
+  const digits = values.number.replace(/\D/g, '')
 
-  const validate = (vals = { number, holder, expiry, cvv }): Record<string, string> => {
+  const update = (patch: Partial<CardFormValues>) => onChange({ ...values, ...patch })
+
+  const validate = (vals = { ...values, cvv }): Record<string, string> => {
     const errs: Record<string, string> = {}
     if (touched.number || vals.number) {
       if (digits === '') errs.number = 'Card number is required'
@@ -90,8 +92,8 @@ export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormP
   }
 
   useEffect(() => {
-    onValidityChange?.(isCreditCardValid({ number, holder, expiry, cvv }))
-  }, [number, holder, expiry, cvv, onValidityChange])
+    onValidityChange?.(isCreditCardValid({ ...values, cvv }))
+  }, [values, cvv, onValidityChange])
 
   const formatNumber = (val: string) => {
     const d = val.replace(/\D/g, '').slice(0, 16)
@@ -118,10 +120,11 @@ export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormP
         <Input
           id="card-number"
           placeholder="1234 5678 9012 3456"
-          value={number}
+          value={values.number}
           onChange={(e) => {
-            setNumber(formatNumber(e.target.value))
-            if (touched.number) setErrors(validate({ number: formatNumber(e.target.value), holder, expiry, cvv }))
+            const v = formatNumber(e.target.value)
+            update({ number: v })
+            if (touched.number) setErrors(validate({ ...values, number: v, cvv }))
           }}
           onBlur={() => handleBlur('number')}
           inputMode="numeric"
@@ -140,10 +143,11 @@ export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormP
         <Input
           id="card-holder"
           placeholder="Full name on card"
-          value={holder}
+          value={values.holder}
           onChange={(e) => {
-            setHolder(e.target.value)
-            if (touched.holder) setErrors(validate({ number, holder: e.target.value, expiry, cvv }))
+            const v = e.target.value
+            update({ holder: v })
+            if (touched.holder) setErrors(validate({ ...values, holder: v, cvv }))
           }}
           onBlur={() => handleBlur('holder')}
           aria-invalid={!!errors.holder}
@@ -160,10 +164,11 @@ export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormP
           <Input
             id="card-expiry"
             placeholder="MM/YY"
-            value={expiry}
+            value={values.expiry}
             onChange={(e) => {
-              setExpiry(formatExpiry(e.target.value))
-              if (touched.expiry) setErrors(validate({ number, holder, expiry: formatExpiry(e.target.value), cvv }))
+              const v = formatExpiry(e.target.value)
+              update({ expiry: v })
+              if (touched.expiry) setErrors(validate({ ...values, expiry: v, cvv }))
             }}
             onBlur={() => handleBlur('expiry')}
             maxLength={5}
@@ -185,7 +190,7 @@ export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormP
             onChange={(e) => {
               const v = e.target.value.replace(/\D/g, '').slice(0, 4)
               setCvv(v)
-              if (touched.cvv) setErrors(validate({ number, holder, expiry, cvv: v }))
+              if (touched.cvv) setErrors(validate({ ...values, cvv: v }))
             }}
             onBlur={() => handleBlur('cvv')}
             maxLength={4}
@@ -200,11 +205,8 @@ export function CreditCardForm({ onSaveCard, onValidityChange }: CreditCardFormP
       <div className="flex items-center gap-2">
         <Checkbox
           id="save-card"
-          checked={saveCard}
-          onCheckedChange={(c) => {
-            setSaveCard(c === true)
-            onSaveCard?.(c === true)
-          }}
+          checked={values.saveCard}
+          onCheckedChange={(c) => update({ saveCard: c === true })}
         />
         <Label htmlFor="save-card" className="text-sm font-normal">Save card for future purchases</Label>
       </div>

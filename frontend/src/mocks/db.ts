@@ -63,4 +63,13 @@ export const db = factory({
     postcode: String,
     isDefault: Boolean,
   },
+  savedPaymentMethod: {
+    id: primaryKey(String),
+    brand: String,
+    last4: String,
+    expiry: String,
+    holder: String,
+    isDefault: Boolean,
+    createdAt: String,
+  },
 })

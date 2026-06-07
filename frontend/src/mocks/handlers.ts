@@ -161,4 +161,93 @@ export const handlers = [
     await sleep()
     return HttpResponse.json(db.address.getAll())
   }),
+
+  http.get('/api/saved-payment-methods', async () => {
+    await sleep()
+    const all = db.savedPaymentMethod.getAll()
+    const sorted = [...all].sort((a, b) => {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return tb - ta
+    })
+    return HttpResponse.json(sorted)
+  }),
+
+  http.post('/api/saved-payment-methods', async ({ request }) => {
+    await sleep()
+    const body = (await request.json()) as {
+      brand: string
+      last4: string
+      expiry: string
+      holder: string
+      is_default?: boolean
+    }
+
+    const all = db.savedPaymentMethod.getAll()
+    const wantsDefault = body.is_default === true || all.length === 0
+    if (wantsDefault) {
+      all.forEach((c) => db.savedPaymentMethod.update({
+        where: { id: { equals: c.id } },
+        data: { isDefault: false },
+      }))
+    }
+
+    const record = db.savedPaymentMethod.create({
+      id: crypto.randomUUID(),
+      brand: body.brand,
+      last4: body.last4,
+      expiry: body.expiry,
+      holder: body.holder,
+      isDefault: wantsDefault,
+      createdAt: new Date().toISOString(),
+    })
+    return HttpResponse.json(record, { status: 201 })
+  }),
+
+  http.delete('/api/saved-payment-methods/:id', async ({ params }) => {
+    await sleep()
+    const record = db.savedPaymentMethod.findFirst({
+      where: { id: { equals: params.id as string } },
+    })
+    if (!record) return new HttpResponse(null, { status: 404 })
+    const wasDefault = record.isDefault
+    db.savedPaymentMethod.delete({ where: { id: { equals: record.id } } })
+
+    if (wasDefault) {
+      const remaining = db.savedPaymentMethod.getAll()
+      const next = [...remaining].sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return tb - ta
+      })[0]
+      if (next) {
+        db.savedPaymentMethod.update({
+          where: { id: { equals: next.id } },
+          data: { isDefault: true },
+        })
+      }
+    }
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.patch('/api/saved-payment-methods/:id/default', async ({ params }) => {
+    await sleep()
+    const record = db.savedPaymentMethod.findFirst({
+      where: { id: { equals: params.id as string } },
+    })
+    if (!record) return new HttpResponse(null, { status: 404 })
+    db.savedPaymentMethod.getAll().forEach((c) => {
+      if (c.id !== record.id) {
+        db.savedPaymentMethod.update({
+          where: { id: { equals: c.id } },
+          data: { isDefault: false },
+        })
+      }
+    })
+    const updated = db.savedPaymentMethod.update({
+      where: { id: { equals: record.id } },
+      data: { isDefault: true },
+    })
+    return HttpResponse.json(updated)
+  }),
 ]

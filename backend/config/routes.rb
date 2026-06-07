@@ -6,6 +6,12 @@ Rails.application.routes.draw do
 
   namespace :api do
     post 'checkout', to: 'checkout#create'
+
+    resources :saved_payment_methods, only: [:index, :create, :destroy] do
+      member do
+        patch :default
+      end
+    end
   end
 
   namespace :admin do

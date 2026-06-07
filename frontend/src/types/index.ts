@@ -112,3 +112,20 @@ export interface CheckoutForm {
   payment: PaymentMethod;
   couponCode?: string;
 }
+
+export interface SavedCreditCard {
+  id: string;
+  brand: 'Visa' | 'Mastercard' | 'Amex';
+  last4: string;
+  expiry: string;
+  holder: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export interface CardFormValues {
+  number: string;
+  holder: string;
+  expiry: string;
+  saveCard: boolean;
+}

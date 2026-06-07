@@ -4,7 +4,8 @@ import { Container } from '../components/layout/container'
 import { Button } from '../components/ui/button'
 import { ShippingForm, isShippingValid } from '../components/checkout/shipping-form'
 import { PaymentSelector } from '../components/payment/payment-selector'
-import type { Address, PaymentMethod, PaymentMethodType } from '../types'
+import { detectCardType } from '../components/payment/credit-card-form'
+import type { Address, PaymentMethod, PaymentMethodType, CardFormValues } from '../types'
 
 interface PlaceholderCartItem {
   id: string
@@ -63,6 +64,7 @@ export default function Checkout() {
     address: '', city: '', state: '', postcode: '', isDefault: true,
   })
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>({ type: 'ewallet', provider: 'tng' })
+  const [cardForm, setCardForm] = useState<CardFormValues>({ number: '', holder: '', expiry: '', saveCard: false })
   const [creditCardValid, setCreditCardValid] = useState(false)
   const [placing, setPlacing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -104,12 +106,41 @@ export default function Checkout() {
     setError(null)
     try {
       const result = await processPayment(paymentMethod, total)
-      if (result.success) {
-        const orderId = result.transaction_id || `ORD-${Date.now().toString().slice(-6)}`
-        navigate(`/checkout/success?id=${orderId}`)
-      } else {
+      if (!result.success) {
         setError('Payment failed. Please try again.')
+        return
       }
+
+      // Post-payment "Observer" side effect: persist the card if the user opted in.
+      // Failure here is non-critical (the order is already paid) — log and continue.
+      if (paymentMethod.type === 'credit_card' && cardForm.saveCard) {
+        try {
+          const existing = await fetch('/api/saved-payment-methods')
+            .then((r) => (r.ok ? r.json() : []))
+            .catch(() => [])
+          const hasDefault = Array.isArray(existing) && existing.some((c: { isDefault?: boolean; is_default?: boolean }) => Boolean(c.isDefault ?? c.is_default))
+
+          const brand = detectCardType(cardForm.number)
+          const last4 = cardForm.number.replace(/\D/g, '').slice(-4)
+
+          await fetch('/api/saved-payment-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              brand,
+              last4,
+              expiry: cardForm.expiry,
+              holder: cardForm.holder.trim(),
+              is_default: !hasDefault,
+            }),
+          })
+        } catch (e) {
+          console.warn('Could not save card:', e)
+        }
+      }
+
+      const orderId = result.transaction_id || `ORD-${Date.now().toString().slice(-6)}`
+      navigate(`/checkout/success?id=${orderId}`)
     } catch {
       setError('Failed to place order. Please try again.')
     } finally {
@@ -175,6 +206,8 @@ export default function Checkout() {
               <PaymentSelector
                 value={paymentMethod}
                 onChange={setPaymentMethod}
+                cardValues={cardForm}
+                onCardChange={setCardForm}
                 onCreditCardValidityChange={handleCreditCardValidity}
               />
               <div className="mt-6 flex justify-between gap-2">
@@ -200,6 +233,12 @@ export default function Checkout() {
               <div>
                 <h4 className="text-sm font-semibold mb-2">Payment Method</h4>
                 <p className="text-sm text-muted-foreground">{paymentLabel}</p>
+                {paymentMethod.type === 'credit_card' && cardForm.number && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {detectCardType(cardForm.number)} •••• {cardForm.number.replace(/\D/g, '').slice(-4)}
+                    {cardForm.saveCard && ' • will be saved'}
+                  </p>
+                )}
               </div>
               {error && (
                 <p className="text-sm text-error" role="alert">{error}</p>

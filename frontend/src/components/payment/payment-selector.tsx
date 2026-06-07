@@ -1,9 +1,11 @@
-import type { PaymentMethod, PaymentMethodType, EwalletProvider, OnlineBank } from '../../types'
+import type { PaymentMethod, PaymentMethodType, EwalletProvider, OnlineBank, CardFormValues } from '../../types'
 import { CreditCardForm } from './credit-card-form'
 
 interface PaymentSelectorProps {
   value: PaymentMethod
   onChange: (method: PaymentMethod) => void
+  cardValues: CardFormValues
+  onCardChange: (next: CardFormValues) => void
   onCreditCardValidityChange?: (isValid: boolean) => void
 }
 
@@ -35,7 +37,7 @@ const methods: Array<{
   { type: 'online_banking', title: 'Online Banking',  description: 'FPX — log in to your bank to authorize' },
 ]
 
-export function PaymentSelector({ value, onChange, onCreditCardValidityChange }: PaymentSelectorProps) {
+export function PaymentSelector({ value, onChange, cardValues, onCardChange, onCreditCardValidityChange }: PaymentSelectorProps) {
   return (
     <div className="space-y-3">
       {methods.map((m) => {
@@ -113,7 +115,11 @@ export function PaymentSelector({ value, onChange, onCreditCardValidityChange }:
 
             {isSelected && m.type === 'credit_card' && (
               <div onClick={(e) => e.stopPropagation()} className="mt-3">
-                <CreditCardForm onValidityChange={onCreditCardValidityChange} />
+                <CreditCardForm
+                  values={cardValues}
+                  onChange={onCardChange}
+                  onValidityChange={onCreditCardValidityChange}
+                />
               </div>
             )}
           </div>
