@@ -3,7 +3,7 @@ module Admin
     def list_products(filters = {})
       query = Product.all
 
-      if filters[:category].present? && filters[:category] != 'all'
+      if filters[:category].present? && filters[:category] != "all"
         query = query.where("LOWER(category) = ?", filters[:category].downcase)
       end
 

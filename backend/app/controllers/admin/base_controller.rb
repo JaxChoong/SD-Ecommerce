@@ -8,7 +8,7 @@ module Admin
 
     # Extract session token from Authorization: Bearer <token>
     def token_from_header
-      token = request.headers['Authorization']&.split(' ')&.last
+      token = request.headers["Authorization"]&.split(" ")&.last
       Rails.logger.info "--- DEBUG AUTH ---"
       Rails.logger.info "Header Token: #{token.inspect}"
       Rails.logger.info "Active Token: #{AdminSessionManager.instance.active_token.inspect}"

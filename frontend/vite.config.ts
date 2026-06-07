@@ -26,11 +26,6 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/checkout/, '/api/checkout'),
       },
-      '/api/saved-payment-methods': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/saved-payment-methods/, '/api/saved_payment_methods'),
-      },
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_07_074829) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_06_033744) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -48,17 +48,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_07_074829) do
     t.datetime "updated_at", null: false
     t.integer "usageCount", default: 0, null: false
     t.integer "usageLimit"
-  end
-
-  create_table "saved_payment_methods", force: :cascade do |t|
-    t.string "brand", limit: 16, null: false
-    t.datetime "created_at", null: false
-    t.string "expiry", limit: 5, null: false
-    t.string "holder", limit: 100, null: false
-    t.boolean "is_default", default: false, null: false
-    t.string "last4", limit: 4, null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_at"], name: "index_saved_payment_methods_on_created_at"
-    t.index ["is_default"], name: "index_saved_payment_methods_on_is_default"
   end
 end

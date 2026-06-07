@@ -428,10 +428,6 @@ type PaymentMethod =
 /checkout                   # Multi-step checkout
 /checkout/success           # Order confirmation
 /coupons                    # Browse available coupons
-/account                    # User account dashboard
-/account/orders             # Order history
-/account/addresses          # Saved addresses
-/account/payment-methods    # Saved payment methods
 ```
 
 ### 4.2 Page Layouts
@@ -835,8 +831,6 @@ interface CartState {
 interface UserState {
   isAuthenticated: boolean;
   user: User | null;
-  addresses: Address[];
-  savedPaymentMethods: PaymentMethod[];
 }
 
 // UI State
@@ -1099,7 +1093,7 @@ interface OrderStatusResponse {
 | Cart drawer component | P0 | 6h |
 | Cart item management | P0 | 4h |
 | Checkout multi-step form | P0 | 12h |
-| Shipping address form | P0 | 4h |
+| Shipping address snapshot (captured per-order, no persistent user data) | P0 | 4h |
 | Order summary component | P0 | 4h |
 
 ### Phase 4: Coupon System (Week 4-5)

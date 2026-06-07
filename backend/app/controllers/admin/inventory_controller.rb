@@ -26,13 +26,13 @@ module Admin
 
       if params[:product] && params[:product][:image].respond_to?(:read)
         begin
-          product_data['image'] = upload_image(params[:product][:image])
+          product_data["image"] = upload_image(params[:product][:image])
         rescue StandardError => e
-          render json: { errors: [e.message] }, status: :unprocessable_entity
+          render json: { errors: [ e.message ] }, status: :unprocessable_entity
           return
         end
       else
-        render json: { errors: ["Image file is required"] }, status: :unprocessable_entity
+        render json: { errors: [ "Image file is required" ] }, status: :unprocessable_entity
         return
       end
 
@@ -46,15 +46,15 @@ module Admin
 
       if params[:product] && params[:product][:image].respond_to?(:read)
         begin
-          product_data['image'] = upload_image(params[:product][:image])
+          product_data["image"] = upload_image(params[:product][:image])
         rescue StandardError => e
-          render json: { errors: [e.message] }, status: :unprocessable_entity
+          render json: { errors: [ e.message ] }, status: :unprocessable_entity
           return
         end
       else
         # If it's a string, keep it. Otherwise, remove it so we don't nullify
-        unless product_data['image'].is_a?(String) && product_data['image'].present?
-          product_data.delete('image')
+        unless product_data["image"].is_a?(String) && product_data["image"].present?
+          product_data.delete("image")
         end
       end
 
@@ -72,14 +72,14 @@ module Admin
 
     def upload_image(uploaded_file)
       ext = File.extname(uploaded_file.original_filename).downcase
-      unless ['.png', '.jpg', '.jpeg'].include?(ext)
+      unless [ ".png", ".jpg", ".jpeg" ].include?(ext)
         raise StandardError, "Image must be a PNG, JPG, or JPEG file"
       end
 
-      directory = Rails.root.join('public', 'uploads')
+      directory = Rails.root.join("public", "uploads")
       FileUtils.mkdir_p(directory)
       filename = "#{SecureRandom.uuid}#{ext}"
-      File.open(directory.join(filename), 'wb') do |file|
+      File.open(directory.join(filename), "wb") do |file|
         file.write(uploaded_file.read)
       end
       "/uploads/#{filename}"

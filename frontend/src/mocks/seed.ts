@@ -185,16 +185,14 @@ export function seed() {
     discountTarget: 'base_price',
   })
 
-  db.address.create({
-    id: 'a1', fullName: 'Alex Tan', phone: '012-3456789', email: 'alex@example.com',
-    address: '12, Jalan Bukit Bintang', city: 'Kuala Lumpur', state: 'WP Kuala Lumpur',
-    postcode: '55100', isDefault: true,
-  })
-  db.address.create({
-    id: 'a2', fullName: 'Alex Tan', phone: '016-9876543', email: 'alex@example.com',
-    address: '45, Persiaran Gurney', city: 'George Town', state: 'Pulau Pinang',
-    postcode: '10250', isDefault: false,
-  })
+  const customer1 = {
+    name: 'Alex Tan', email: 'alex@example.com', phone: '012-3456789',
+    shoppingAddress: '12, Jalan Bukit Bintang\n55100 Kuala Lumpur\nWP Kuala Lumpur',
+  }
+  const customer2 = {
+    name: 'Alex Tan', email: 'alex@example.com', phone: '016-9876543',
+    shoppingAddress: '45, Persiaran Gurney\n10250 George Town\nPulau Pinang',
+  }
 
   db.order.create({
     id: 'ORD-001', items: [
@@ -204,7 +202,7 @@ export function seed() {
     subtotal: 128.40, discount: 0, shipping: 10, total: 138.40,
     paymentMethod: { type: 'ewallet' } as const,
     status: 'paid',
-    shippingAddress: { id: 'a1', fullName: 'Alex Tan', phone: '012-3456789', email: 'alex@example.com', address: '12, Jalan Bukit Bintang', city: 'Kuala Lumpur', state: 'WP Kuala Lumpur', postcode: '55100', isDefault: true },
+    customer: customer1,
     createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
   })
   db.order.create({
@@ -215,7 +213,7 @@ export function seed() {
     couponCode: 'SAVE20',
     paymentMethod: { type: 'online_banking' } as const,
     status: 'paid',
-    shippingAddress: { id: 'a2', fullName: 'Alex Tan', phone: '016-9876543', email: 'alex@example.com', address: '45, Persiaran Gurney', city: 'George Town', state: 'Pulau Pinang', postcode: '10250', isDefault: false },
+    customer: customer2,
     createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
   })
   db.order.create({
@@ -226,11 +224,10 @@ export function seed() {
     subtotal: 234.00, discount: 0, shipping: 10, total: 244.00,
     paymentMethod: { type: 'credit_card' } as const,
     status: 'pending',
-    shippingAddress: { id: 'a1', fullName: 'Alex Tan', phone: '012-3456789', email: 'alex@example.com', address: '12, Jalan Bukit Bintang', city: 'Kuala Lumpur', state: 'WP Kuala Lumpur', postcode: '55100', isDefault: true },
+    customer: customer1,
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   })
 
-  // Create additional mock orders to test pagination and filters (ORD-004 to ORD-015)
   for (let i = 4; i <= 15; i++) {
     db.order.create({
       id: `ORD-0${i < 10 ? '0' + i : i}`,
@@ -243,8 +240,7 @@ export function seed() {
       total: 10 * i + 10,
       paymentMethod: { type: 'ewallet' } as const,
       status: 'paid',
-      shippingAddress: { id: 'a1', fullName: 'Alex Tan', phone: '012-3456789', email: 'alex@example.com', address: '12, Jalan Bukit Bintang', city: 'Kuala Lumpur', state: 'WP Kuala Lumpur', postcode: '55100', isDefault: true },
-      // Stagger dates: i days ago
+      customer: customer1,
       createdAt: new Date(Date.now() - 86400000 * i).toISOString(),
     })
   }

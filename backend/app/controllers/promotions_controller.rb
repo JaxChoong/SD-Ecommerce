@@ -11,7 +11,7 @@ class PromotionsController < ApplicationController
       {
         id: c.promotionid.to_s,
         code: c.promoCode,
-        description: c.name || '',
+        description: c.name || "",
         discountType: c.type,
         discountValue: c.discountValue.to_f,
         category: c.category,

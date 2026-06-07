@@ -4,7 +4,7 @@ module Admin
     def create
       # Ensure there is at least one admin account for ease of testing
       if ::Administrator.count.zero?
-        ::Administrator.create!(username: 'admin', password: 'adminpassword')
+        ::Administrator.create!(username: "admin", password: "adminpassword")
       end
 
       admin = ::Administrator.find_by(username: params[:username])
@@ -17,7 +17,7 @@ module Admin
           expires_at: AdminSessionManager.instance.expires_at.iso8601
         }
       else
-        render json: { error: 'Invalid username or password' }, status: :unauthorized
+        render json: { error: "Invalid username or password" }, status: :unauthorized
       end
     end
 
@@ -29,7 +29,7 @@ module Admin
 
     # GET /admin/session
     def show
-      token = request.headers['Authorization']&.split(' ')&.last
+      token = request.headers["Authorization"]&.split(" ")&.last
       if AdminSessionManager.instance.validate_session(token)
         render json: {
           valid: true,

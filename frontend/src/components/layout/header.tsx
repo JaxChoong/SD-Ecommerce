@@ -98,14 +98,9 @@ export function Header() {
                         </button>
                       </>
                     ) : (
-                      <>
-                        <Link to="/account" className="block px-4 py-2 text-sm hover:bg-surface font-medium" onClick={() => setAdminOpen(false)}>My Account</Link>
-                        <Link to="/account/orders" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Order History</Link>
-                        <div className="border-t border-border my-1" />
-                        <Link to="/admin/login" className="block px-4 py-2 text-sm hover:bg-surface text-primary" onClick={() => setAdminOpen(false)}>
-                          Admin Portal
-                        </Link>
-                      </>
+                      <Link to="/admin/login" className="block px-4 py-2 text-sm hover:bg-surface text-primary" onClick={() => setAdminOpen(false)}>
+                        Admin Portal
+                      </Link>
                     )}
                   </div>
                 </>
@@ -171,7 +166,6 @@ export function Header() {
                   <Link to="/products" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Shop</Link>
                   <Link to="/coupons" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Coupons</Link>
                   <Link to="/cart" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Cart</Link>
-                  <Link to="/account" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
                   <Link to="/admin/login" className="px-2 py-2 text-sm hover:text-primary text-primary" onClick={() => setMenuOpen(false)}>
                     Admin Portal
                   </Link>

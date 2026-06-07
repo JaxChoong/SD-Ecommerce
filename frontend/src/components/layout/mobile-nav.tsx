@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router'
-import { Home, Search, ShoppingCart, User, Package, Tags, ClipboardList } from 'lucide-react'
+import { Home, Search, ShoppingCart, Package, Tags, ClipboardList } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 
@@ -19,7 +19,6 @@ export function MobileNav() {
         { to: '/', icon: Home, label: 'Home' },
         { to: '/products', icon: Search, label: 'Search' },
         { to: '/cart', icon: ShoppingCart, label: 'Cart', badge: itemCount },
-        { to: '/account', icon: User, label: 'Account' },
       ]
 
   return (

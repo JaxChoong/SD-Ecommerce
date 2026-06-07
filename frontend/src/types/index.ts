@@ -39,16 +39,11 @@ export interface Coupon {
   discountTarget: 'base_price' | 'shipping';
 }
 
-export interface Address {
-  id: string;
-  fullName: string;
-  phone: string;
+export interface Customer {
+  name: string;
   email: string;
-  address: string;
-  city: string;
-  state: string;
-  postcode: string;
-  isDefault: boolean;
+  phone: string;
+  shoppingAddress: string;
 }
 
 export type PaymentMethodType = 'ewallet' | 'credit_card' | 'online_banking'
@@ -80,7 +75,7 @@ export interface Order {
   couponCode?: string;
   paymentMethod: PaymentMethod;
   status: 'pending' | 'paid' | 'failed' | 'expired';
-  shippingAddress: Address;
+  customer: Customer;
   createdAt: string;
 }
 
@@ -100,32 +95,13 @@ export interface CouponValidation {
 }
 
 export interface CheckoutForm {
-  shipping: {
-    fullName: string;
-    phone: string;
-    email: string;
-    address: string;
-    city: string;
-    state: string;
-    postcode: string;
-  };
+  customer: Customer;
   payment: PaymentMethod;
   couponCode?: string;
-}
-
-export interface SavedCreditCard {
-  id: string;
-  brand: 'Visa' | 'Mastercard' | 'Amex';
-  last4: string;
-  expiry: string;
-  holder: string;
-  isDefault: boolean;
-  createdAt: string;
 }
 
 export interface CardFormValues {
   number: string;
   holder: string;
   expiry: string;
-  saveCard: boolean;
 }

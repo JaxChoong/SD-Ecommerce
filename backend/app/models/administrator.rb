@@ -1,5 +1,5 @@
 class Administrator < ApplicationRecord
-  self.table_name = 'admins'
+  self.table_name = "admins"
 
   has_secure_password
 

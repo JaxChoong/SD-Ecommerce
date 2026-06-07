@@ -15,6 +15,13 @@ interface OrderItem {
   quantity: number;
 }
 
+interface Customer {
+  name: string;
+  email: string;
+  phone: string;
+  shoppingAddress: string;
+}
+
 interface Order {
   id: string;
   items: OrderItem[];
@@ -26,15 +33,7 @@ interface Order {
   discountTarget?: "base_price" | "shipping";
   paymentMethod: { type: string; provider?: string };
   status: "pending" | "paid" | "failed" | "expired";
-  shippingAddress: {
-    fullName: string;
-    phone: string;
-    email: string;
-    address: string;
-    city: string;
-    state: string;
-    postcode: string;
-  };
+  customer: Customer;
   createdAt: string;
 }
 
@@ -254,18 +253,18 @@ export default function AdminPurchases() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="font-medium">
-                            {order.shippingAddress.fullName}
+                            {order.customer.name}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 min-w-0">
                           <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="truncate">
-                            {order.shippingAddress.email}
+                            {order.customer.email}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span>{order.shippingAddress.phone}</span>
+                          <span>{order.customer.phone}</span>
                         </div>
                       </div>
                     </div>
@@ -276,14 +275,7 @@ export default function AdminPurchases() {
                       </h3>
                       <div className="flex gap-2 text-sm text-muted-foreground leading-relaxed">
                         <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <div>
-                          <p>{order.shippingAddress.address}</p>
-                          <p>
-                            {order.shippingAddress.postcode}{" "}
-                            {order.shippingAddress.city}
-                          </p>
-                          <p>{order.shippingAddress.state}</p>
-                        </div>
+                        <p className="whitespace-pre-line">{order.customer.shoppingAddress}</p>
                       </div>
                     </div>
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { Checkbox } from '../ui/checkbox'
 import type { CardFormValues } from '../../types'
 
 interface CreditCardFormProps {
@@ -200,15 +199,6 @@ export function CreditCardForm({ values, onChange, onValidityChange }: CreditCar
           />
           {errors.cvv && <p className="text-xs text-error" role="alert">{errors.cvv}</p>}
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="save-card"
-          checked={values.saveCard}
-          onCheckedChange={(c) => update({ saveCard: c === true })}
-        />
-        <Label htmlFor="save-card" className="text-sm font-normal">Save card for future purchases</Label>
       </div>
     </div>
   )

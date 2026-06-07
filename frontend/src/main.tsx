@@ -4,15 +4,6 @@ import './globals.css'
 import App from './App'
 
 async function start() {
-  if (import.meta.env.DEV) {
-    try {
-      const { worker } = await import('./mocks/browser')
-      await worker.start({ onUnhandledRequest: 'bypass' })
-    } catch (e) {
-      console.warn('MSW failed to start:', e)
-    }
-  }
-
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

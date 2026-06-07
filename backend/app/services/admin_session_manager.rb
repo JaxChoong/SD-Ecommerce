@@ -1,5 +1,5 @@
-require 'singleton'
-require 'securerandom'
+require "singleton"
+require "securerandom"
 
 class AdminSessionManager
   include Singleton

@@ -2,10 +2,10 @@ import { useState, useMemo, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { Container } from '../components/layout/container'
 import { Button } from '../components/ui/button'
-import { ShippingForm, isShippingValid } from '../components/checkout/shipping-form'
+import { ShippingForm, isCustomerValid } from '../components/checkout/shipping-form'
 import { PaymentSelector } from '../components/payment/payment-selector'
 import { detectCardType } from '../components/payment/credit-card-form'
-import type { Address, PaymentMethod, PaymentMethodType, CardFormValues } from '../types'
+import type { Customer, PaymentMethod, PaymentMethodType, CardFormValues } from '../types'
 
 interface PlaceholderCartItem {
   id: string
@@ -17,7 +17,7 @@ interface PlaceholderCartItem {
 }
 
 // TODO: Replace with API call, e.g.:
-//   const PLACEHOLDER_CART = await fetch('/api/cart').then(r => r.json())
+//   const cart = await fetch('/api/cart').then(r => r.json())
 const PLACEHOLDER_CART: PlaceholderCartItem[] = [
   { id: 'p1', productId: 'placeholder-1', productName: 'Linen Button-Up Shirt',  productImage: '/placeholder.svg', price: 89.90, quantity: 1 },
   { id: 'p2', productId: 'placeholder-2', productName: 'Cotton Crew T-Shirt',    productImage: '/placeholder.svg', price: 39.90, quantity: 2 },
@@ -47,6 +47,8 @@ async function processPayment(method: PaymentMethod, amount: number) {
   }
 }
 
+const EMPTY_CUSTOMER: Customer = { name: '', email: '', phone: '', shoppingAddress: '' }
+
 export default function Checkout() {
   const navigate = useNavigate()
 
@@ -59,18 +61,15 @@ export default function Checkout() {
   const total = Math.round((subtotal + shipping) * 100) / 100
 
   const [step, setStep] = useState<'shipping' | 'payment' | 'review'>('shipping')
-  const [shippingAddress, setShippingAddress] = useState<Address>({
-    id: '', fullName: '', phone: '', email: '',
-    address: '', city: '', state: '', postcode: '', isDefault: true,
-  })
+  const [customer, setCustomer] = useState<Customer>(EMPTY_CUSTOMER)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>({ type: 'ewallet', provider: 'tng' })
-  const [cardForm, setCardForm] = useState<CardFormValues>({ number: '', holder: '', expiry: '', saveCard: false })
+  const [cardForm, setCardForm] = useState<CardFormValues>({ number: '', holder: '', expiry: '' })
   const [creditCardValid, setCreditCardValid] = useState(false)
   const [placing, setPlacing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showShippingErrors, setShowShippingErrors] = useState(false)
 
-  const shippingValid = useMemo(() => isShippingValid(shippingAddress), [shippingAddress])
+  const customerValid = useMemo(() => isCustomerValid(customer), [customer])
 
   const handleCreditCardValidity = useCallback((valid: boolean) => {
     setCreditCardValid(valid)
@@ -86,7 +85,7 @@ export default function Checkout() {
   }
 
   const handleContinueToPayment = () => {
-    if (!shippingValid) {
+    if (!customerValid) {
       setShowShippingErrors(true)
       return
     }
@@ -110,35 +109,6 @@ export default function Checkout() {
         setError('Payment failed. Please try again.')
         return
       }
-
-      // Post-payment "Observer" side effect: persist the card if the user opted in.
-      // Failure here is non-critical (the order is already paid) — log and continue.
-      if (paymentMethod.type === 'credit_card' && cardForm.saveCard) {
-        try {
-          const existing = await fetch('/api/saved-payment-methods')
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => [])
-          const hasDefault = Array.isArray(existing) && existing.some((c: { isDefault?: boolean; is_default?: boolean }) => Boolean(c.isDefault ?? c.is_default))
-
-          const brand = detectCardType(cardForm.number)
-          const last4 = cardForm.number.replace(/\D/g, '').slice(-4)
-
-          await fetch('/api/saved-payment-methods', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              brand,
-              last4,
-              expiry: cardForm.expiry,
-              holder: cardForm.holder.trim(),
-              is_default: !hasDefault,
-            }),
-          })
-        } catch (e) {
-          console.warn('Could not save card:', e)
-        }
-      }
-
       const orderId = result.transaction_id || `ORD-${Date.now().toString().slice(-6)}`
       navigate(`/checkout/success?id=${orderId}`)
     } catch {
@@ -186,11 +156,10 @@ export default function Checkout() {
           {step === 'shipping' && (
             <div className="bg-surface rounded-radius p-4 sm:p-6 space-y-4">
               <ShippingForm
-                values={shippingAddress}
-                onChange={setShippingAddress}
-                showErrors={showShippingErrors}
+                values={customer}
+                onChange={setCustomer}
               />
-              {showShippingErrors && !shippingValid && (
+              {showShippingErrors && !customerValid && (
                 <p className="text-sm text-error" role="alert">
                   Please fix the highlighted fields before continuing.
                 </p>
@@ -223,11 +192,10 @@ export default function Checkout() {
             <div className="bg-surface rounded-radius p-4 sm:p-6 space-y-6">
               <div>
                 <h4 className="text-sm font-semibold mb-2">Shipping Address</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {shippingAddress.fullName}<br />
-                  {shippingAddress.address}, {shippingAddress.city}<br />
-                  {shippingAddress.state} {shippingAddress.postcode}<br />
-                  {shippingAddress.phone} • {shippingAddress.email}
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {customer.name}<br />
+                  {customer.shoppingAddress}<br />
+                  {customer.phone} • {customer.email}
                 </p>
               </div>
               <div>
@@ -236,7 +204,6 @@ export default function Checkout() {
                 {paymentMethod.type === 'credit_card' && cardForm.number && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {detectCardType(cardForm.number)} •••• {cardForm.number.replace(/\D/g, '').slice(-4)}
-                    {cardForm.saveCard && ' • will be saved'}
                   </p>
                 )}
               </div>

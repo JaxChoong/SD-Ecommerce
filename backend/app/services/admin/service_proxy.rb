@@ -1,5 +1,4 @@
 module Admin
-
   class ServiceProxy
     def initialize(real_service, token)
       @real_service = real_service
