@@ -291,10 +291,7 @@ export default function AdminPurchases() {
                       <p className="text-xs text-muted-foreground">
                         Payment Method:{" "}
                         <span className="font-medium text-foreground capitalize">
-                          {order.paymentMethod.type}{" "}
-                          {order.paymentMethod.provider
-                            ? `(${order.paymentMethod.provider.toUpperCase()})`
-                            : ""}
+                          {String(order.paymentMethod.type || '').replace('_', ' ')}
                         </span>
                       </p>
                     </div>

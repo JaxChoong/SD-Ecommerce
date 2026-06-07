@@ -4,6 +4,10 @@ Rails.application.routes.draw do
   resources :products, only: [:index, :show]
   resources :promotions, only: [:index]
 
+  namespace :api do
+    post 'checkout', to: 'checkout#create'
+  end
+
   namespace :admin do
     post 'login', to: 'sessions#create'
     delete 'logout', to: 'sessions#destroy'

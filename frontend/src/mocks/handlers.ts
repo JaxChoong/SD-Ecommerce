@@ -128,50 +128,14 @@ export const handlers = [
   }),
 
   http.post('/api/checkout', async ({ request }) => {
+    const body = (await request.json()) as { amount: number; method: string }
     await sleep(300)
-    const body = (await request.json()) as {
-      items: Array<{ productId: string; productName: string; productImage: string; price: number; quantity: number }>
-      subtotal: number
-      discount: number
-      shipping: number
-      total: number
-      couponCode?: string
-      discountTarget?: string
-      paymentMethod: { type: string }
-      shippingAddress: Record<string, unknown>
-    }
-
-    const orderId = `ORD-${String(Date.now()).slice(-6)}`
-    const order = db.order.create({
-      id: orderId,
-      items: body.items,
-      subtotal: body.subtotal,
-      discount: body.discount,
-      shipping: body.shipping,
-      total: body.total,
-      couponCode: body.couponCode || '',
-      discountTarget: body.discountTarget || 'base_price',
-      paymentMethod: body.paymentMethod as { type: string },
-      status: 'paid',
-      shippingAddress: body.shippingAddress as Record<string, unknown>,
-      createdAt: new Date().toISOString(),
+    return HttpResponse.json({
+      success: true,
+      method: body.method,
+      transaction_id: `MSW-${Date.now().toString().slice(-6)}`,
+      processed_at: new Date().toISOString(),
     })
-
-    db.cartItem.getAll().forEach((item) => {
-      db.cartItem.delete({ where: { id: { equals: item.id } } })
-    })
-
-    if (body.couponCode) {
-      const coupon = db.coupon.findFirst({ where: { code: { equals: body.couponCode } } })
-      if (coupon) {
-        db.coupon.update({
-          where: { id: { equals: coupon.id } },
-          data: { usageCount: coupon.usageCount + 1 },
-        })
-      }
-    }
-
-    return HttpResponse.json(order, { status: 201 })
   }),
 
   http.get('/api/checkout/:orderId/status', async ({ params }) => {

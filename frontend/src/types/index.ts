@@ -51,10 +51,24 @@ export interface Address {
   isDefault: boolean;
 }
 
+export type PaymentMethodType = 'ewallet' | 'credit_card' | 'online_banking'
+
+export type EwalletProvider = 'tng' | 'grabpay' | 'boost' | 'shopeepay'
+
+export type OnlineBank =
+  | 'maybank'
+  | 'cimb'
+  | 'public_bank'
+  | 'rhb'
+  | 'hong_leong'
+  | 'ambank'
+  | 'bank_rakyat'
+  | 'bsn'
+
 export type PaymentMethod =
-  | { type: 'ewallet'; provider: 'tng' | 'grabpay' | 'boost' | 'shopeepay' }
-  | { type: 'duitnow'; subtype: 'qr' | 'online' }
-  | { type: 'card'; cardId?: string };
+  | { type: 'ewallet'; provider: EwalletProvider }
+  | { type: 'credit_card' }
+  | { type: 'online_banking'; bank: OnlineBank }
 
 export interface Order {
   id: string;
