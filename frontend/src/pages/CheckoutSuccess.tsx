@@ -22,9 +22,6 @@ export default function CheckoutSuccess() {
           <Button asChild size="lg">
             <Link to="/products">Continue Shopping</Link>
           </Button>
-          <Button asChild variant="outline">
-            <Link to="/account/orders">View Order History</Link>
-          </Button>
         </div>
       </div>
     </Container>

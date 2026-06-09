@@ -1,4 +1,4 @@
-module Payment
+module PaymentStrategy
   class OnlineBankingStrategy < PaymentStrategy
     def process_payment(amount)
       puts "[OnlineBankingStrategy] Processing online banking payment of RM #{format('%.2f', amount)}"

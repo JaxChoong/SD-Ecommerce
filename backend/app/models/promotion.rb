@@ -14,6 +14,9 @@ class Promotion < ApplicationRecord
   validates :usageCount, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :end_date_after_start_date
 
+  has_many :order_promotions, foreign_key: :promotion_id, dependent: :destroy
+  has_many :orders, through: :order_promotions
+
   private
 
   def end_date_after_start_date

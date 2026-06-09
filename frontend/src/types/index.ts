@@ -65,6 +65,38 @@ export type PaymentMethod =
   | { type: 'credit_card' }
   | { type: 'online_banking'; bank: OnlineBank }
 
+export interface OrderItemRecord {
+  orderItemId: number;
+  orderId: number;
+  productId: string;
+  productName: string;
+  productImage: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface PaymentRecord {
+  paymentId: number;
+  orderId: number;
+  method: PaymentMethodType;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  amount: number;
+  processedAt: string;
+  transactionId?: string;
+}
+
+export interface OrderRecord {
+  orderId: number;
+  customer: Customer;
+  items: OrderItemRecord[];
+  payment: PaymentRecord | null;
+  status: 'pending' | 'paid' | 'failed' | 'expired';
+  finalTotal: number;
+  paymentMethod: string | PaymentMethod | { type: PaymentMethodType; provider?: string | null; bank?: string | null };
+  createdAt: string;
+}
+
 export interface Order {
   id: string;
   items: CartItem[];

@@ -1,4 +1,4 @@
-module Payment
+module PaymentStrategy
   class EwalletStrategy < PaymentStrategy
     def process_payment(amount)
       puts "[EWalletStrategy] Processing e-wallet payment of RM #{format('%.2f', amount)}"

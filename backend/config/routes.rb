@@ -6,6 +6,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     post "checkout", to: "checkout#create"
+    post "coupons/validate", to: "coupons#validate"
   end
 
   namespace :admin do
@@ -15,5 +16,6 @@ Rails.application.routes.draw do
 
     resources :inventory, only: [ :index, :show, :create, :update, :destroy ]
     resources :promotions, only: [ :index, :show, :create, :update, :destroy ]
+    resources :orders, only: [ :index, :show ]
   end
 end

@@ -1,4 +1,4 @@
-module Payment
+module PaymentStrategy
   class CheckoutContext
     SUPPORTED_METHODS = %w[credit_card ewallet online_banking].freeze
 

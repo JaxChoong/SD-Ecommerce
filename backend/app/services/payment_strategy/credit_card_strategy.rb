@@ -1,4 +1,4 @@
-module Payment
+module PaymentStrategy
   class CreditCardStrategy < PaymentStrategy
     def process_payment(amount)
       puts "[CreditCardStrategy] Processing credit card payment of RM #{format('%.2f', amount)}"

@@ -7,4 +7,7 @@ class Product < ApplicationRecord
   validates :basePrice, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :stockQuantity, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :image, presence: true
+
+  has_many :cart_items, foreign_key: :product_id, dependent: :restrict_with_error
+  has_many :order_items, foreign_key: :product_id, dependent: :restrict_with_error
 end

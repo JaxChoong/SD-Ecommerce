@@ -5,54 +5,36 @@ import { Button } from '../components/ui/button'
 import { ShippingForm, isCustomerValid } from '../components/checkout/shipping-form'
 import { PaymentSelector } from '../components/payment/payment-selector'
 import { detectCardType } from '../components/payment/credit-card-form'
+import { useCart } from '../context/CartContext'
 import type { Customer, PaymentMethod, PaymentMethodType, CardFormValues } from '../types'
-
-interface PlaceholderCartItem {
-  id: string
-  productId: string
-  productName: string
-  productImage: string
-  price: number
-  quantity: number
-}
-
-// TODO: Replace with API call, e.g.:
-//   const cart = await fetch('/api/cart').then(r => r.json())
-const PLACEHOLDER_CART: PlaceholderCartItem[] = [
-  { id: 'p1', productId: 'placeholder-1', productName: 'Linen Button-Up Shirt',  productImage: '/placeholder.svg', price: 89.90, quantity: 1 },
-  { id: 'p2', productId: 'placeholder-2', productName: 'Cotton Crew T-Shirt',    productImage: '/placeholder.svg', price: 39.90, quantity: 2 },
-  { id: 'p3', productId: 'placeholder-3', productName: 'Slim-Fit Chino Pants',   productImage: '/placeholder.svg', price: 119.00, quantity: 1 },
-]
 
 const FREE_SHIPPING_THRESHOLD = 200
 const FLAT_SHIPPING_FEE = 10
 
-const fallbackStrategies: Record<PaymentMethodType, (amount: number) => Promise<{ success: boolean; method: PaymentMethodType; transaction_id: string; amount: number }>> = {
-  ewallet:        (amount) => new Promise((resolve) => setTimeout(() => resolve({ success: true, method: 'ewallet',        transaction_id: `LOCAL-${Math.random().toString(16).slice(2, 10).toUpperCase()}`, amount }),  800)),
-  credit_card:    (amount) => new Promise((resolve) => setTimeout(() => resolve({ success: true, method: 'credit_card',    transaction_id: `LOCAL-${Math.random().toString(16).slice(2, 10).toUpperCase()}`, amount }), 1200)),
-  online_banking: (amount) => new Promise((resolve) => setTimeout(() => resolve({ success: true, method: 'online_banking', transaction_id: `LOCAL-${Math.random().toString(16).slice(2, 10).toUpperCase()}`, amount }), 1500)),
-}
-
-async function processPayment(method: PaymentMethod, amount: number) {
-  try {
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, method: method.type, provider: 'provider' in method ? method.provider : undefined, bank: 'bank' in method ? method.bank : undefined }),
-    })
-    if (!res.ok) throw new Error(`Backend responded ${res.status}`)
-    return await res.json()
-  } catch {
-    return fallbackStrategies[method.type](amount)
+async function processCheckout(payload: {
+  customer: Customer
+  items: { productId: string; quantity: number; unitPrice: number }[]
+  paymentMethod: { type: PaymentMethodType; provider?: string; bank?: string }
+  amount: number
+}) {
+  const res = await fetch('/api/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || `Backend responded ${res.status}`)
   }
+  return await res.json()
 }
 
 const EMPTY_CUSTOMER: Customer = { name: '', email: '', phone: '', shoppingAddress: '' }
 
 export default function Checkout() {
   const navigate = useNavigate()
+  const { items, clearCart } = useCart()
 
-  const items = PLACEHOLDER_CART
   const subtotal = useMemo(
     () => Math.round(items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100,
     [items],
@@ -104,15 +86,26 @@ export default function Checkout() {
     setPlacing(true)
     setError(null)
     try {
-      const result = await processPayment(paymentMethod, total)
-      if (!result.success) {
-        setError('Payment failed. Please try again.')
-        return
+      const payload = {
+        customer,
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          unitPrice: i.price,
+        })),
+        paymentMethod: {
+          type: paymentMethod.type,
+          provider: 'provider' in paymentMethod ? paymentMethod.provider : undefined,
+          bank: 'bank' in paymentMethod ? paymentMethod.bank : undefined,
+        },
+        amount: total,
       }
-      const orderId = result.transaction_id || `ORD-${Date.now().toString().slice(-6)}`
+      const result = await processCheckout(payload)
+      const orderId = result?.payment?.transactionId || result?.orderId || `ORD-${Date.now().toString().slice(-6)}`
+      clearCart()
       navigate(`/checkout/success?id=${orderId}`)
-    } catch {
-      setError('Failed to place order. Please try again.')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to place order. Please try again.')
     } finally {
       setPlacing(false)
     }

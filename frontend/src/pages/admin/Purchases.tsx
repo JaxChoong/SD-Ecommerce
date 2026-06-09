@@ -6,47 +6,19 @@ import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 import { Clock, Mail, MapPin, Phone, User } from "lucide-react";
 import { PricingSummary } from "../../components/common/pricing-summary";
-
-interface OrderItem {
-  productId: string;
-  productName: string;
-  productImage: string;
-  price: number;
-  quantity: number;
-}
-
-interface Customer {
-  name: string;
-  email: string;
-  phone: string;
-  shoppingAddress: string;
-}
-
-interface Order {
-  id: string;
-  items: OrderItem[];
-  subtotal: number;
-  discount: number;
-  shipping: number;
-  total: number;
-  couponCode?: string;
-  discountTarget?: "base_price" | "shipping";
-  paymentMethod: { type: string; provider?: string };
-  status: "pending" | "paid" | "failed" | "expired";
-  customer: Customer;
-  createdAt: string;
-}
+import { useAuth } from "../../context/AuthContext";
+import { normalizeOrders } from "../../lib/api";
+import type { OrderRecord } from "../../types";
 
 export default function AdminPurchases() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { adminToken } = useAuth();
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [prevFilters, setPrevFilters] = useState({
-    startDate: "",
-    endDate: "",
-  });
+  const [prevFilters, setPrevFilters] = useState({ startDate: "", endDate: "" });
 
   if (prevFilters.startDate !== startDate || prevFilters.endDate !== endDate) {
     setPrevFilters({ startDate, endDate });
@@ -55,17 +27,24 @@ export default function AdminPurchases() {
 
   const fetchOrders = () => {
     setLoading(true);
-    fetch("/api/admin/orders")
-      .then((r) => r.json())
+    setError(null);
+    fetch("/api/admin/orders", {
+      headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : undefined,
+    })
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({}));
+          throw new Error(body.error || `Failed to load orders (${r.status})`);
+        }
+        return r.json();
+      })
       .then((data) => {
-        // Sort orders by date descending
-        const sorted = (data || []).sort(
-          (a: Order, b: Order) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        const sorted = normalizeOrders(data).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
         setOrders(sorted);
       })
-      .catch((err) => console.error("Error fetching orders:", err))
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load orders"))
       .finally(() => setLoading(false));
   };
 
@@ -74,18 +53,14 @@ export default function AdminPurchases() {
     fetchOrders();
   }, []);
 
-  // currentPage is reset to 1 in the render phase above to avoid useEffect warnings
-
   const filteredOrders = orders.filter((order) => {
     if (startDate) {
       const startMs = new Date(startDate).getTime();
-      const orderMs = new Date(order.createdAt).getTime();
-      if (orderMs < startMs) return false;
+      if (new Date(order.createdAt).getTime() < startMs) return false;
     }
     if (endDate) {
       const endMs = new Date(endDate).getTime();
-      const orderMs = new Date(order.createdAt).getTime();
-      if (orderMs > endMs) return false;
+      if (new Date(order.createdAt).getTime() > endMs) return false;
     }
     return true;
   });
@@ -103,7 +78,6 @@ export default function AdminPurchases() {
         <h1 className="text-2xl font-semibold">Recent Orders</h1>
       </div>
 
-      {/* Date & Time Filters */}
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6 bg-surface p-4 rounded-radius border border-border/20 items-end">
         <div className="space-y-1">
           <Label htmlFor="start-date" className="text-xs font-semibold">
@@ -145,6 +119,8 @@ export default function AdminPurchases() {
 
       {loading ? (
         <p className="text-muted-foreground">Loading recent purchases...</p>
+      ) : error ? (
+        <p className="text-error">{error}</p>
       ) : orders.length === 0 ? (
         <p className="text-muted-foreground">No customer purchases found.</p>
       ) : filteredOrders.length === 0 ? (
@@ -155,146 +131,154 @@ export default function AdminPurchases() {
         <div className="space-y-6">
           <div className="space-y-6">
             {paginatedOrders.map((order) => {
-              const isShippingPromo = (order.discountTarget === "shipping" || order.couponCode?.toUpperCase() === "FREESHIP") && order.subtotal < 100;
-              const shippingDiscount = isShippingPromo ? 10 : 0;
-              const displayedShipping = isShippingPromo ? 0 : order.shipping;
-              const displayedDiscount = isShippingPromo ? 0 : order.discount;
+              const pm = order.paymentMethod;
+              const paymentType =
+                typeof pm === "object" && pm !== null && "type" in pm ? pm.type : "credit_card";
+              const itemsSubtotal = order.items.reduce(
+                (s, i) => s + i.subtotal,
+                0,
+              );
+              const shippingFee = Math.max(0, +(order.finalTotal - itemsSubtotal).toFixed(2));
 
               return (
                 <Card
-                  key={order.id}
+                  key={order.orderId}
                   className="border border-border/40 overflow-hidden shadow-sm"
                 >
-                <div className="bg-surface/50 border-b border-border/40 p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      Order ID: {order.id}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1 text-sm">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{new Date(order.createdAt).toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                        order.status === "paid"
-                          ? "bg-success/10 text-success"
-                          : order.status === "pending"
-                            ? "bg-warning/10 text-warning"
-                            : "bg-error/10 text-error"
-                      }`}
-                    >
-                      {order.status.toUpperCase()}
-                    </span>
-                    <p className="font-semibold text-base">
-                      RM{order.total.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-                <CardContent className="p-4 sm:p-6 grid gap-6 md:grid-cols-3">
-                  {/* Items Section */}
-                  <div className="md:col-span-2 space-y-3 min-w-0">
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                      Items
-                    </h3>
-                    <div className="divide-y divide-border/30">
-                      {order.items.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex gap-3 py-3 first:pt-0 last:pb-0"
-                        >
-                          <div className="h-12 w-12 rounded bg-surface overflow-hidden shrink-0">
-                            <img
-                              src={item.productImage}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm line-clamp-2 break-words leading-snug">
-                              {item.productName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Qty: {item.quantity} • RM{item.price.toFixed(2)}{" "}
-                              each
-                            </p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-sm font-semibold">
-                              RM{(item.price * item.quantity).toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-border/30 pt-3 flex flex-col items-end gap-1.5 text-sm">
-                      <PricingSummary
-                        subtotal={order.subtotal}
-                        discount={displayedDiscount}
-                        shippingDiscount={shippingDiscount}
-                        shipping={displayedShipping}
-                        total={order.total}
-                        couponCode={order.couponCode}
-                        totalLabel="Total Paid"
-                        className="w-full max-w-xs"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Customer / Shipping Section */}
-                  <div className="space-y-4 border-t md:border-t-0 md:border-l border-border/30 pt-4 md:pt-0 md:pl-6 min-w-0">
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                        Customer
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="font-medium">
-                            {order.customer.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="truncate">
-                            {order.customer.email}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span>{order.customer.phone}</span>
-                        </div>
+                  <div className="bg-surface/50 border-b border-border/40 p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        Order ID: {order.orderId}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        Txn: {order.payment?.transactionId || "—"}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1 text-sm">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>{new Date(order.createdAt).toLocaleString()}</span>
                       </div>
                     </div>
-
-                    <div className="space-y-2 pt-2 border-t border-border/20">
-                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Shipping Address
-                      </h3>
-                      <div className="flex gap-2 text-sm text-muted-foreground leading-relaxed">
-                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <p className="whitespace-pre-line">{order.customer.shoppingAddress}</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-border/20">
-                      <p className="text-xs text-muted-foreground">
-                        Payment Method:{" "}
-                        <span className="font-medium text-foreground capitalize">
-                          {String(order.paymentMethod.type || '').replace('_', ' ')}
-                        </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                          order.status === "paid"
+                            ? "bg-success/10 text-success"
+                            : order.status === "pending"
+                              ? "bg-warning/10 text-warning"
+                              : "bg-error/10 text-error"
+                        }`}
+                      >
+                        {order.status.toUpperCase()}
+                      </span>
+                      <p className="font-semibold text-base">
+                        RM{order.finalTotal.toFixed(2)}
                       </p>
                     </div>
                   </div>
-                </CardContent>
+                  <CardContent className="p-4 sm:p-6 grid gap-6 md:grid-cols-3">
+                    <div className="md:col-span-2 space-y-3 min-w-0">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Items
+                      </h3>
+                      <div className="divide-y divide-border/30">
+                        {order.items.map((item) => (
+                          <div
+                            key={item.orderItemId}
+                            className="flex gap-3 py-3 first:pt-0 last:pb-0"
+                          >
+                            <div className="h-12 w-12 rounded bg-surface overflow-hidden shrink-0">
+                              <img
+                                src={item.productImage}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm line-clamp-2 break-words leading-snug">
+                                {item.productName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Qty: {item.quantity} • RM{item.unitPrice.toFixed(2)} each
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-sm font-semibold">
+                                RM{item.subtotal.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="border-t border-border/30 pt-3 flex flex-col items-end gap-1.5 text-sm">
+                        <PricingSummary
+                          subtotal={itemsSubtotal}
+                          discount={0}
+                          shippingDiscount={0}
+                          shipping={shippingFee}
+                          total={order.finalTotal}
+                          totalLabel="Total Paid"
+                          className="w-full max-w-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 border-t md:border-t-0 md:border-l border-border/30 pt-4 md:pt-0 md:pl-6 min-w-0">
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                          Customer
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="font-medium">{order.customer.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="truncate">{order.customer.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span>{order.customer.phone}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-border/20">
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Shipping Address
+                        </h3>
+                        <div className="flex gap-2 text-sm text-muted-foreground leading-relaxed">
+                          <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                          <p className="whitespace-pre-line">
+                            {order.customer.shoppingAddress}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-border/20">
+                        <p className="text-xs text-muted-foreground">
+                          Payment Method:{" "}
+                          <span className="font-medium text-foreground capitalize">
+                            {String(paymentType).replace("_", " ")}
+                          </span>
+                        </p>
+                        {order.payment && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Payment Status:{" "}
+                            <span className="font-medium text-foreground capitalize">
+                              {order.payment.status}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
                 </Card>
               );
             })}
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/30 pt-4 mt-6">
               <span className="text-sm text-muted-foreground text-center sm:text-left">
@@ -303,8 +287,8 @@ export default function AdminPurchases() {
                   filteredOrders.length,
                   (currentPage - 1) * itemsPerPage + 1,
                 )}{" "}
-                to {Math.min(filteredOrders.length, currentPage * itemsPerPage)}{" "}
-                of {filteredOrders.length} orders
+                to {Math.min(filteredOrders.length, currentPage * itemsPerPage)} of{" "}
+                {filteredOrders.length} orders
               </span>
               <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
                 <Button
@@ -322,9 +306,7 @@ export default function AdminPurchases() {
                   variant="outline"
                   size="sm"
                   disabled={currentPage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 >
                   Next
                 </Button>
