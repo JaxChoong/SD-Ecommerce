@@ -31,7 +31,10 @@ export function CartItem({ item }: CartItemProps) {
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-sm text-muted-foreground">RM{item.price.toFixed(2)}</p>
+        <p className="text-sm text-muted-foreground">
+          RM{item.price.toFixed(2)}
+          {item.size && item.size !== 'One Size' ? ` · Size ${item.size}` : ''}
+        </p>
         <div className="flex items-center justify-between">
           <QuantitySelector
             value={item.quantity}

@@ -13,6 +13,10 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import CheckoutSuccess from './pages/CheckoutSuccess'
 import Coupons from './pages/Coupons'
+// import AccountDashboard from './pages/account/Dashboard'
+// import AccountOrders from './pages/account/Orders'
+// import AccountAddresses from './pages/account/Addresses'
+// import AccountPaymentMethods from './pages/account/PaymentMethods'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/Products'
 import AdminProductForm from './pages/admin/ProductForm'
@@ -39,12 +43,13 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <SessionTimeoutPrompt />
-        <CartProvider>
-          <ToastContainer>
+        <ToastContainer>
+          <CartProvider>
             <div className="flex min-h-screen flex-col">
               <Header />
               <main className="flex-1">
                 <Routes>
+                  {/* Customer / Guest routes protected from Admin access */}
                   <Route path="/" element={<UserRoute><Home /></UserRoute>} />
                   <Route path="/products" element={<UserRoute><ProductListing /></UserRoute>} />
                   <Route path="/products/:slug" element={<UserRoute><ProductDetail /></UserRoute>} />
@@ -52,7 +57,12 @@ export default function App() {
                   <Route path="/checkout" element={<UserRoute><Checkout /></UserRoute>} />
                   <Route path="/checkout/success" element={<UserRoute><CheckoutSuccess /></UserRoute>} />
                   <Route path="/coupons" element={<UserRoute><Coupons /></UserRoute>} />
+                  {/* /* <Route path="/account" element={<UserRoute><AccountDashboard /></UserRoute>} />
+                  <Route path="/account/orders" element={<UserRoute><AccountOrders /></UserRoute>} />
+                  <Route path="/account/addresses" element={<UserRoute><AccountAddresses /></UserRoute>} />
+                  <Route path="/account/payment-methods" element={<UserRoute><AccountPaymentMethods /></UserRoute>} /> */} */
 
+                  {/* Admin boundaries */}
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                   <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
@@ -67,8 +77,8 @@ export default function App() {
               <Footer />
               <MobileNav />
             </div>
-          </ToastContainer>
-        </CartProvider>
+          </CartProvider>
+        </ToastContainer>
       </AuthProvider>
     </BrowserRouter>
   )

@@ -99,6 +99,7 @@ export default function ProductDetail() {
       productImage: product.image,
       price: product.price,
       quantity,
+      size: selectedSize ?? product.size,
     })
   }
 
