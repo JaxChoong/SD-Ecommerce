@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Container } from '../components/layout/container'
 import { CouponCard } from '../components/coupon/coupon-card'
 import { CouponSearchDialog } from '../components/coupon/coupon-search-dialog'
@@ -9,12 +10,17 @@ import { useCoupons } from '../hooks/useCoupons'
 export default function Coupons() {
   const [search, setSearch] = useState('')
   const { coupons, isLoading } = useCoupons()
+  const navigate = useNavigate()
 
   const filtered = coupons.filter(
     (c) =>
       c.code.toLowerCase().includes(search.toLowerCase()) ||
       c.description.toLowerCase().includes(search.toLowerCase()),
   )
+
+  const handleApply = () => {
+    navigate('/checkout')
+  }
 
   return (
     <Container className="py-8">
@@ -43,7 +49,7 @@ export default function Coupons() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((coupon) => (
-            <CouponCard key={coupon.id} coupon={coupon} />
+            <CouponCard key={coupon.id} coupon={coupon} onApply={handleApply} />
           ))}
         </div>
       )}
