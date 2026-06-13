@@ -8,17 +8,26 @@ export function CouponInput() {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { subtotal, applyCoupon, appliedCoupon, removeCoupon } = useCart()
+  const { subtotal, items, applyCoupon, appliedCoupon, couponCode, removeCoupon } = useCart()
 
   const handleApply = async () => {
     if (!code.trim()) return
     setLoading(true)
     setError(null)
     try {
+      // Send items so the backend Observer can compute category-aware discounts
       const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.trim(), cartTotal: subtotal }),
+        body: JSON.stringify({
+          code: code.trim(),
+          cartTotal: subtotal,
+          items: items.map((i) => ({
+            productId: i.productId,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+        }),
       })
       const data: CouponValidation = await res.json()
       if (data.isValid) {
@@ -35,15 +44,19 @@ export function CouponInput() {
   }
 
   if (appliedCoupon?.isValid) {
+    const disc = appliedCoupon.discount
+    const isShipping = disc?.target === 'shipping'
+    const label = isShipping
+      ? `Free shipping (-RM${disc?.appliedAmount.toFixed(2)})`
+      : `-RM${disc?.appliedAmount.toFixed(2)}`
+
     return (
       <div className="flex items-center justify-between bg-success/10 rounded-radius px-4 py-3">
         <div>
           <p className="text-sm font-medium text-success leading-relaxed">
-            Coupon applied!
+            {couponCode && <span className="font-mono mr-1">{couponCode}</span>}applied!
           </p>
-          <p className="text-xs text-muted-foreground">
-            -RM{appliedCoupon.discount?.appliedAmount.toFixed(2)}
-          </p>
+          <p className="text-xs text-muted-foreground">{label}</p>
         </div>
         <button
           onClick={removeCoupon}
