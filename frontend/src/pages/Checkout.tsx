@@ -5,17 +5,16 @@ import { Button } from '../components/ui/button'
 import { ShippingForm, isCustomerValid } from '../components/checkout/shipping-form'
 import { PaymentSelector } from '../components/payment/payment-selector'
 import { detectCardType } from '../components/payment/credit-card-form'
+import { CouponInput } from '../components/coupon/coupon-input'
 import { useCart } from '../context/CartContext'
 import type { Customer, PaymentMethod, PaymentMethodType, CardFormValues } from '../types'
-
-const FREE_SHIPPING_THRESHOLD = 200
-const FLAT_SHIPPING_FEE = 10
 
 async function processCheckout(payload: {
   customer: Customer
   items: { productId: string; quantity: number; unitPrice: number }[]
   paymentMethod: { type: PaymentMethodType; provider?: string; bank?: string }
   amount: number
+  couponCode?: string
 }) {
   const res = await fetch('/api/checkout', {
     method: 'POST',
@@ -33,14 +32,7 @@ const EMPTY_CUSTOMER: Customer = { name: '', email: '', phone: '', shoppingAddre
 
 export default function Checkout() {
   const navigate = useNavigate()
-  const { items, clearCart } = useCart()
-
-  const subtotal = useMemo(
-    () => Math.round(items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100,
-    [items],
-  )
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : FLAT_SHIPPING_FEE
-  const total = Math.round((subtotal + shipping) * 100) / 100
+  const { items, clearCart, subtotal, shipping, discount, shippingDiscount, total, couponCode } = useCart()
 
   const [step, setStep] = useState<'shipping' | 'payment' | 'review'>('shipping')
   const [customer, setCustomer] = useState<Customer>(EMPTY_CUSTOMER)
@@ -99,6 +91,7 @@ export default function Checkout() {
           bank: 'bank' in paymentMethod ? paymentMethod.bank : undefined,
         },
         amount: total,
+        ...(couponCode ? { couponCode } : {}),
       }
       const result = await processCheckout(payload)
       const orderId = result?.payment?.transactionId || result?.orderId || `ORD-${Date.now().toString().slice(-6)}`
@@ -213,6 +206,7 @@ export default function Checkout() {
           )}
         </div>
 
+        {/* ── Order Summary Sidebar ── */}
         <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-24 lg:self-start order-first lg:order-none">
           <div className="bg-surface rounded-radius p-6 space-y-4">
             <h3 className="font-semibold leading-relaxed">Order Summary</h3>
@@ -230,15 +224,42 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
+
+            {/* Coupon input */}
+            <div className="border-t border-border pt-3">
+              <CouponInput />
+            </div>
+
             <div className="border-t border-border pt-3 space-y-1.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>RM{subtotal.toFixed(2)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-success">
+                  <span>
+                    Coupon discount
+                    {couponCode && <span className="ml-1 font-mono text-xs">({couponCode})</span>}
+                  </span>
+                  <span>-RM{discount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>{shipping === 0 ? 'Free' : `RM${shipping.toFixed(2)}`}</span>
+                <span>
+                  {shipping === 0
+                    ? shippingDiscount > 0
+                      ? <span className="text-success">Free <span className="line-through text-muted-foreground text-xs">RM{(shipping + shippingDiscount).toFixed(2)}</span></span>
+                      : 'Free'
+                    : `RM${shipping.toFixed(2)}`}
+                </span>
               </div>
+              {shippingDiscount > 0 && shipping > 0 && (
+                <div className="flex justify-between text-success text-xs">
+                  <span>Shipping discount</span>
+                  <span>-RM{shippingDiscount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-semibold pt-2 border-t border-border">
                 <span>Total</span>
                 <span>RM{total.toFixed(2)}</span>
@@ -250,3 +271,4 @@ export default function Checkout() {
     </Container>
   )
 }
+
