@@ -20,7 +20,6 @@ module Promotions
       @wrapped_component.shipping_discount
     end
 
-    # Retrieve base subtotal by delegating down the chain
     def subtotal
       if @wrapped_component.respond_to?(:subtotal)
         @wrapped_component.subtotal
@@ -29,7 +28,6 @@ module Promotions
       end
     end
 
-    # Retrieve base shipping cost by delegating down the chain
     def shipping
       if @wrapped_component.respond_to?(:shipping)
         @wrapped_component.shipping
