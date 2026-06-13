@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Search, Tags } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
 import { Input } from '../ui/input'
@@ -10,12 +11,18 @@ export function CouponSearchDialog() {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const { coupons, isLoading } = useCoupons()
+  const navigate = useNavigate()
 
   const filtered = coupons.filter(
     (c) =>
       c.code.toLowerCase().includes(search.toLowerCase()) ||
       c.description.toLowerCase().includes(search.toLowerCase()),
   )
+
+  const handleApply = () => {
+    setOpen(false)
+    navigate('/checkout')
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,7 +55,7 @@ export function CouponSearchDialog() {
               <CouponCard
                 key={coupon.id}
                 coupon={coupon}
-                onApply={() => setOpen(false)}
+                onApply={handleApply}
               />
             ))
           )}
