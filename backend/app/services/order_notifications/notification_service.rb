@@ -59,8 +59,26 @@ module OrderNotifications
       return invalid_coupon(orderProcessor, "MAX_USES", "Coupon usage limit has been reached.") if maxed_out?(promotion)
       return invalid_coupon(orderProcessor, "NOT_APPLICABLE", "Coupon is not applicable to this cart.") unless category_matches?(promotion, orderProcessor)
 
+      resolved_items = orderProcessor.items.filter_map do |item|
+        product = Product.find_by(productid: item[:product_id])
+        next unless product
+        { product: product, price: item[:price].to_f, quantity: item[:quantity].to_i }
+      end
+
       subtotal = orderProcessor.items.sum { |item| item[:price].to_f * item[:quantity].to_i }
-      applied_amount = applied_amount_for(promotion, subtotal)
+      base_shipping = subtotal >= 100 ? 0.0 : (subtotal.positive? ? 10.0 : 0.0)
+
+      pricing = Promotions::BaseCartPricing.new(subtotal, base_shipping)
+      if promotion.discountTarget == 'shipping'
+        pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
+      elsif promotion.type == 'percentage'
+        pricing = Promotions::PercentageDiscountDecorator.new(pricing, promotion, resolved_items)
+      elsif promotion.type == 'fixed'
+        pricing = Promotions::FixedDiscountDecorator.new(pricing, promotion, resolved_items)
+      end
+
+      pricing.calculate_total
+      applied_amount = (promotion.discountTarget == 'shipping') ? pricing.shipping_discount : pricing.discount
 
       orderProcessor.applied_coupon = {
         isValid: true,
@@ -75,20 +93,34 @@ module OrderNotifications
 
     def recalculate_totals(orderProcessor)
       orderProcessor.subtotal = round_money(orderProcessor.items.sum { |item| item[:price].to_f * item[:quantity].to_i })
-
       base_shipping = orderProcessor.subtotal >= 100 ? 0.0 : (orderProcessor.subtotal.positive? ? 10.0 : 0.0)
-      coupon_discount = orderProcessor.applied_coupon&.dig(:isValid) ? orderProcessor.applied_coupon[:discount] : nil
 
-      if coupon_discount&.dig(:target) == "shipping"
-        orderProcessor.discount = 0.0
-        orderProcessor.shipping_discount = round_money([base_shipping, coupon_discount[:value].to_f].min)
-      else
-        orderProcessor.discount = round_money(coupon_discount&.dig(:appliedAmount).to_f)
-        orderProcessor.shipping_discount = 0.0
+      resolved_items = orderProcessor.items.filter_map do |item|
+        product = Product.find_by(productid: item[:product_id])
+        next unless product
+        { product: product, price: item[:price].to_f, quantity: item[:quantity].to_i }
       end
 
-      orderProcessor.shipping = round_money([base_shipping - orderProcessor.shipping_discount, 0.0].max)
-      orderProcessor.total = round_money([orderProcessor.subtotal - orderProcessor.discount + orderProcessor.shipping, 0.0].max)
+      promotion = nil
+      if orderProcessor.applied_coupon&.dig(:isValid) && orderProcessor.coupon_code.present?
+        promotion = Promotion.find_by("LOWER(\"promoCode\") = ?", orderProcessor.coupon_code.to_s.downcase)
+      end
+
+      pricing = Promotions::BaseCartPricing.new(orderProcessor.subtotal, base_shipping)
+      if promotion
+        if promotion.discountTarget == 'shipping'
+          pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
+        elsif promotion.type == 'percentage'
+          pricing = Promotions::PercentageDiscountDecorator.new(pricing, promotion, resolved_items)
+        elsif promotion.type == 'fixed'
+          pricing = Promotions::FixedDiscountDecorator.new(pricing, promotion, resolved_items)
+        end
+      end
+
+      orderProcessor.total             = round_money(pricing.calculate_total)
+      orderProcessor.discount          = round_money(pricing.discount)
+      orderProcessor.shipping_discount = round_money(pricing.shipping_discount)
+      orderProcessor.shipping          = round_money([base_shipping - orderProcessor.shipping_discount, 0.0].max)
     end
 
     def log_cart_update(orderProcessor)
