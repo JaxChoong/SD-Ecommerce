@@ -22,7 +22,7 @@ export default function AdminCouponForm() {
     discountType: 'percentage' as 'percentage' | 'fixed',
     discountValue: '',
     category: 'all',
-    expiresAt: '',
+    expiresAt: new Date(Date.now() + 86400000 - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
     isActive: true,
     hasQuantityLimit: false,
     usageLimit: '',
@@ -124,7 +124,14 @@ export default function AdminCouponForm() {
           </div>
           <div>
             <Label htmlFor="expiresAt">Expiry Date</Label>
-            <Input id="expiresAt" type="date" value={form.expiresAt} onChange={(e) => update('expiresAt', e.target.value)} required />
+            <Input 
+              id="expiresAt" 
+              type="date" 
+              min={new Date(Date.now() + 86400000 - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+              value={form.expiresAt} 
+              onChange={(e) => update('expiresAt', e.target.value)} 
+              required 
+            />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="description">Campaign Description / Name</Label>
