@@ -42,7 +42,8 @@ class CartsController < ApplicationController
   def build_cart
     cart = OrderNotifications::OrderProcessor.new(
       items: params[:items] || params.dig(:cart, :items) || [],
-      coupon_code: params[:coupon_code] || params[:couponCode] || params.dig(:cart, :couponCode)
+      coupon_code: params[:coupon_code] || params[:couponCode] || params.dig(:cart, :couponCode),
+      coupon_codes: params[:coupon_codes] || params[:couponCodes] || params.dig(:cart, :couponCodes)
     )
 
     # OBSERVER PATTERN IMPLEMENTATION:

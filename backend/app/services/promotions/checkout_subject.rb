@@ -1,12 +1,13 @@
 module Promotions
   class CheckoutSubject
-    attr_accessor :items, :subtotal, :shipping, :coupon, :discount, :shipping_discount
+    attr_accessor :items, :subtotal, :shipping, :coupon, :coupons, :discount, :shipping_discount
 
-    def initialize(items:, subtotal:, shipping:, coupon:)
+    def initialize(items:, subtotal:, shipping:, coupon: nil, coupons: nil)
       @items            = items  
       @subtotal         = subtotal.to_f
       @shipping         = shipping.to_f
       @coupon           = coupon
+      @coupons          = coupons || [coupon].compact
       @discount         = 0.0
       @shipping_discount = 0.0
       @observers        = []
@@ -23,13 +24,13 @@ module Promotions
     def calculate
       pricing = Promotions::BaseCartPricing.new(@subtotal, @shipping)
 
-      if @coupon
-        if @coupon.discountTarget == 'shipping'
-          pricing = Promotions::ShippingDiscountDecorator.new(pricing, @coupon, @items)
-        elsif @coupon.type == 'percentage'
-          pricing = Promotions::PercentageDiscountDecorator.new(pricing, @coupon, @items)
-        elsif @coupon.type == 'fixed'
-          pricing = Promotions::FixedDiscountDecorator.new(pricing, @coupon, @items)
+      @coupons.each do |promo|
+        if promo.discountTarget == 'shipping'
+          pricing = Promotions::ShippingDiscountDecorator.new(pricing, promo, @items)
+        elsif promo.type == 'percentage'
+          pricing = Promotions::PercentageDiscountDecorator.new(pricing, promo, @items)
+        elsif promo.type == 'fixed'
+          pricing = Promotions::FixedDiscountDecorator.new(pricing, promo, @items)
         end
       end
 

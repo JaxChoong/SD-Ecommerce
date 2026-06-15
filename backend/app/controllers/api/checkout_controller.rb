@@ -6,7 +6,14 @@ module Api
       customer_params  = params.require(:customer).permit(:name, :email, :phone, :shoppingAddress)
       items_params     = params.require(:items).map { |item| item.permit(:productId, :quantity, :unitPrice).to_h }
       payment_params   = params.require(:paymentMethod).permit(:type, :provider, :bank).to_h
-      coupon_code      = params[:couponCode].presence&.upcase&.strip
+      coupon_codes = if params[:couponCodes].is_a?(Array)
+                       params[:couponCodes]
+                     elsif params[:couponCode].present?
+                       params[:couponCode].to_s.split(',').map(&:strip)
+                     else
+                       []
+                     end
+      coupon_codes = coupon_codes.map(&:upcase).reject(&:blank?).uniq
 
       method_type = payment_params["type"].to_s
       provider    = payment_params["provider"].presence
@@ -22,20 +29,21 @@ module Api
         return
       end
 
-      # ── Resolve coupon (optional) ──────────────────────────────────────────
-      promotion = nil
-      if coupon_code.present?
-        promotion = Promotion.find_by(promoCode: coupon_code)
+      # ── Resolve coupons (optional) ──────────────────────────────────────────
+      promotions = []
+      coupon_codes.each do |code|
+        promo = Promotion.find_by("UPPER(\"promoCode\") = ?", code)
 
-        if promotion.nil? || !promotion.IsActive || promotion.endDate < Time.current
-          render json: { success: false, error: "Coupon code is invalid or has expired." }, status: :unprocessable_entity
+        if promo.nil? || !promo.IsActive || promo.endDate < Time.current
+          render json: { success: false, error: "Coupon code #{code} is invalid or has expired." }, status: :unprocessable_entity
           return
         end
 
-        if promotion.usageLimit.present? && promotion.usageCount >= promotion.usageLimit
-          render json: { success: false, error: "This coupon has reached its usage limit." }, status: :unprocessable_entity
+        if promo.usageLimit.present? && promo.usageCount >= promo.usageLimit
+          render json: { success: false, error: "Coupon #{code} has reached its usage limit." }, status: :unprocessable_entity
           return
         end
+        promotions << promo
       end
 
       # ── Observer-based discount calculation ────────────────────────────────
@@ -54,10 +62,10 @@ module Api
         items:    resolved_items,
         subtotal: subtotal,
         shipping: base_shipping,
-        coupon:   promotion
+        coupons:  promotions
       )
       result           = checkout_calc.calculate
-      discount_amount  = (promotion&.discountTarget == "shipping") ? result[:shipping_discount] : result[:discount]
+      discount_amount  = result[:discount]
       final_total      = result[:total]
 
       if final_total < 0
@@ -115,14 +123,30 @@ module Api
             )
           end
 
-          # Save the applied promotion and increment its usage counter
-          if promotion && discount_amount > 0
+          # Save the applied promotions and increment their usage counters
+          current_pricing = Promotions::BaseCartPricing.new(subtotal, base_shipping)
+          promotions.each do |promo|
+            prev_discount = current_pricing.discount
+            prev_shipping_discount = current_pricing.shipping_discount
+
+            if promo.discountTarget == 'shipping'
+              current_pricing = Promotions::ShippingDiscountDecorator.new(current_pricing, promo, resolved_items)
+              discount_val = current_pricing.shipping_discount - prev_shipping_discount
+            else
+              if promo.type == 'percentage'
+                current_pricing = Promotions::PercentageDiscountDecorator.new(current_pricing, promo, resolved_items)
+              elsif promo.type == 'fixed'
+                current_pricing = Promotions::FixedDiscountDecorator.new(current_pricing, promo, resolved_items)
+              end
+              discount_val = current_pricing.discount - prev_discount
+            end
+
             OrderPromotion.create!(
               order:           order,
-              promotion:       promotion,
-              discountApplied: discount_amount
+              promotion:       promo,
+              discountApplied: discount_val.round(2)
             )
-            promotion.increment!(:usageCount)
+            promo.increment!(:usageCount)
           end
 
           # Execute payment via Strategy pattern

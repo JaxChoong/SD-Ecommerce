@@ -200,9 +200,21 @@ export default function AdminCoupons() {
                       {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="py-3 pr-4">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                        {c.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      {(() => {
+                        const isExpired = c.expiresAt ? new Date(c.expiresAt) < new Date() : false
+                        if (isExpired) {
+                          return (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-warning/10 text-warning font-medium">
+                              Expired
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                            {c.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
@@ -227,9 +239,21 @@ export default function AdminCoupons() {
                   <div className="flex items-center justify-between gap-2 mb-3 border-b border-border/10 pb-2">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-sm font-semibold text-primary">{c.code}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                        {c.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      {(() => {
+                        const isExpired = c.expiresAt ? new Date(c.expiresAt) < new Date() : false
+                        if (isExpired) {
+                          return (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-warning/10 text-warning">
+                              Expired
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${c.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                            {c.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        )
+                      })()}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">

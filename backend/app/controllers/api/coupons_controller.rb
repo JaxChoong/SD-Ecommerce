@@ -27,33 +27,42 @@ module Api
         return
       end
 
-      applied = compute_discount(promotion, cart_total)
-      if applied[:requirement] && cart_total < applied[:requirement]
-        render json: { isValid: false, errors: { code: "MIN_PURCHASE", message: "Cart total does not meet minimum purchase", requirement: applied[:requirement] } }, status: :unprocessable_entity
-        return
+      resolved_items = (params[:items] || []).map do |item|
+        product = Product.find_by(productid: item[:productId])
+        { product: product, price: item[:price].to_f, quantity: item[:quantity].to_i }
       end
+
+      if promotion.category.present? && promotion.category != 'all'
+        has_matching_item = resolved_items.any? { |item| item[:product]&.category&.downcase == promotion.category.downcase }
+        unless has_matching_item
+          render json: { isValid: false, errors: { code: "NOT_APPLICABLE", message: "This coupon is not applicable to any items in your cart." } }, status: :unprocessable_entity
+          return
+        end
+      end
+
+      base_shipping = cart_total >= 100 ? 0.0 : (cart_total > 0 ? 10.0 : 0.0)
+      pricing = Promotions::BaseCartPricing.new(cart_total, base_shipping)
+
+      if promotion.discountTarget == 'shipping'
+        pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
+      elsif promotion.type == 'percentage'
+        pricing = Promotions::PercentageDiscountDecorator.new(pricing, promotion, resolved_items)
+      elsif promotion.type == 'fixed'
+        pricing = Promotions::FixedDiscountDecorator.new(pricing, promotion, resolved_items)
+      end
+
+      pricing.calculate_total
+      applied_discount = (promotion.discountTarget == 'shipping') ? pricing.shipping_discount : pricing.discount
 
       render json: {
         isValid: true,
         discount: {
           type: promotion.type,
           value: promotion.discountValue.to_f,
-          appliedAmount: applied[:appliedAmount],
+          appliedAmount: applied_discount.round(2),
           target: promotion.discountTarget
         }
       }
-    end
-
-    private
-
-    def compute_discount(promotion, cart_total)
-      if promotion.type == "percentage"
-        amount = (cart_total * promotion.discountValue.to_f / 100).round(2)
-        { appliedAmount: amount }
-      else
-        amount = [ promotion.discountValue.to_f, cart_total ].min
-        { appliedAmount: amount.round(2) }
-      end
     end
   end
 end

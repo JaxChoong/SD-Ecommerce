@@ -21,6 +21,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/cart/, '/cart'),
       },
+      '/api/coupons/validate': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/api/coupons': {
         target: 'http://localhost:3000',
         changeOrigin: true,
@@ -29,7 +33,6 @@ export default defineConfig({
       '/api/checkout': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/checkout/, '/checkout'),
       },
       '/api/orders': {
         target: 'http://localhost:3000',

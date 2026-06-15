@@ -10,14 +10,13 @@ interface CouponCardProps {
 }
 
 export function CouponCard({ coupon, onApply }: CouponCardProps) {
-  const { subtotal, items, applyCoupon, couponCode } = useCart()
+  const { subtotal, items, applyCoupon, couponCodes } = useCart()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [applied, setApplied] = useState(false)
 
   const isEligible = !coupon.minPurchase || subtotal >= coupon.minPurchase
   const isExpired = new Date(coupon.expiresAt) < new Date()
-  const isAlreadyApplied = couponCode === coupon.code
+  const isAlreadyApplied = couponCodes.includes(coupon.code)
 
   const discountLabel =
     coupon.discountType === 'percentage'
@@ -44,7 +43,6 @@ export function CouponCard({ coupon, onApply }: CouponCardProps) {
       const data: CouponValidation = await res.json()
       if (data.isValid) {
         applyCoupon(coupon.code, data)
-        setApplied(true)
         onApply?.(coupon.code)
       } else {
         setError(data.errors?.message || 'Coupon cannot be applied')
@@ -61,14 +59,14 @@ export function CouponCard({ coupon, onApply }: CouponCardProps) {
       isEligible && !isExpired
         ? 'border-border'
         : 'border-border opacity-60'
-    } ${(applied || isAlreadyApplied) ? 'border-success/40 bg-success/5' : ''}`}>
+    } ${isAlreadyApplied ? 'border-success/40 bg-success/5' : ''}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold font-mono">{coupon.code}</span>
             {!isEligible && <span className="text-xs text-warning">Locked</span>}
             {isExpired && <span className="text-xs text-error">Expired</span>}
-            {(applied || isAlreadyApplied) && (
+            {isAlreadyApplied && (
               <span className="flex items-center gap-1 text-xs text-success font-medium">
                 <CheckCircle2 className="h-3.5 w-3.5" /> Applied
               </span>
@@ -81,7 +79,7 @@ export function CouponCard({ coupon, onApply }: CouponCardProps) {
           </p>
         </div>
 
-        {isEligible && !isExpired && !applied && !isAlreadyApplied && (
+        {isEligible && !isExpired && !isAlreadyApplied && (
           <Button
             size="sm"
             variant="outline"
@@ -93,7 +91,7 @@ export function CouponCard({ coupon, onApply }: CouponCardProps) {
           </Button>
         )}
 
-        {(applied || isAlreadyApplied) && (
+        {isAlreadyApplied && (
           <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
         )}
       </div>

@@ -55,7 +55,9 @@ export interface Address {
 export type PaymentMethod =
   | { type: 'ewallet'; provider: 'tng' | 'grabpay' | 'boost' | 'shopeepay' }
   | { type: 'duitnow'; subtype: 'qr' | 'online' }
-  | { type: 'card'; cardId?: string };
+  | { type: 'card'; cardId?: string }
+  | { type: 'credit_card' }
+  | { type: 'online_banking'; bank: OnlineBank };
 
 export interface Order {
   id: string;
@@ -72,6 +74,7 @@ export interface Order {
 }
 
 export interface CouponValidation {
+  code?: string;
   isValid: boolean;
   errors?: {
     code: 'EXPIRED' | 'MIN_PURCHASE' | 'MAX_USES' | 'NOT_FOUND' | 'NOT_APPLICABLE';
@@ -98,4 +101,64 @@ export interface CheckoutForm {
   };
   payment: PaymentMethod;
   couponCode?: string;
+}
+
+export interface Customer {
+  name: string;
+  email: string;
+  phone: string;
+  shoppingAddress: string;
+}
+
+export type PaymentMethodType = 'ewallet' | 'credit_card' | 'online_banking' | 'duitnow' | 'card';
+
+export type EwalletProvider = 'tng' | 'grabpay' | 'boost' | 'shopeepay';
+
+export type OnlineBank =
+  | 'maybank'
+  | 'cimb'
+  | 'public_bank'
+  | 'rhb'
+  | 'hong_leong'
+  | 'ambank'
+  | 'bank_rakyat'
+  | 'bsn';
+
+export interface CardFormValues {
+  number: string;
+  holder: string;
+  expiry: string;
+  cvc?: string;
+}
+
+export interface OrderItemRecord {
+  orderItemId: number;
+  orderId: number;
+  productId: string;
+  productName: string;
+  productImage: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface PaymentRecord {
+  paymentId: number;
+  orderId: number;
+  method: PaymentMethodType;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  amount: number;
+  processedAt: string;
+  transactionId?: string;
+}
+
+export interface OrderRecord {
+  orderId: number;
+  customer: Customer;
+  items: OrderItemRecord[];
+  payment: PaymentRecord | null;
+  status: 'pending' | 'paid' | 'failed' | 'expired';
+  finalTotal: number;
+  paymentMethod: string | PaymentMethod | { type: PaymentMethodType; provider?: string | null; bank?: string | null };
+  createdAt: string;
 }

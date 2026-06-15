@@ -8,7 +8,9 @@ const CART_STORAGE_TTL_MS = 24 * 60 * 60 * 1000
 interface CartState {
   items: CartItem[]
   appliedCoupon: CouponValidation | null
+  appliedCoupons: CouponValidation[]
   couponCode: string | null
+  couponCodes: string[]
 }
 
 interface StoredCartState extends CartState {
@@ -32,7 +34,7 @@ type CartAction =
   | { type: 'CLEAR_CART' }
   | { type: 'REPLACE_CART'; payload: CartState }
   | { type: 'APPLY_COUPON'; payload: { code: string; validation: CouponValidation } }
-  | { type: 'REMOVE_COUPON' }
+  | { type: 'REMOVE_COUPON'; payload?: string }
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -43,8 +45,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           ...state,
           items: state.items.map((i) =>
             i.productId === action.payload.productId && i.productName === action.payload.productName
-              ? { ...i, quantity: i.quantity + action.payload.quantity }
-              : i,
+               ? { ...i, quantity: i.quantity + action.payload.quantity }
+               : i,
           ),
         }
       }
@@ -60,17 +62,41 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ),
       }
     case 'CLEAR_CART':
-      return { ...state, items: [], appliedCoupon: null, couponCode: null }
+      return { ...state, items: [], appliedCoupon: null, appliedCoupons: [], couponCode: null, couponCodes: [] }
     case 'REPLACE_CART':
       return action.payload
-    case 'APPLY_COUPON':
+    case 'APPLY_COUPON': {
+      const code = action.payload.code.toUpperCase()
+      const validation = { ...action.payload.validation, code }
+      const newCodes = state.couponCodes.includes(code)
+        ? state.couponCodes
+        : [...state.couponCodes, code]
+      const newCoupons = state.appliedCoupons.some((c) => c.code?.toUpperCase() === code)
+        ? state.appliedCoupons.map((c) => c.code?.toUpperCase() === code ? validation : c)
+        : [...state.appliedCoupons, validation]
       return {
         ...state,
-        appliedCoupon: action.payload.validation,
-        couponCode: action.payload.validation.isValid ? action.payload.code : null,
+        appliedCoupon: validation,
+        appliedCoupons: newCoupons,
+        couponCode: newCodes.join(', '),
+        couponCodes: newCodes,
       }
-    case 'REMOVE_COUPON':
-      return { ...state, appliedCoupon: null, couponCode: null }
+    }
+    case 'REMOVE_COUPON': {
+      const codeToRemove = action.payload?.toUpperCase()
+      if (codeToRemove) {
+        const newCodes = state.couponCodes.filter((c) => c.toUpperCase() !== codeToRemove)
+        const newCoupons = state.appliedCoupons.filter((c) => c.code?.toUpperCase() !== codeToRemove)
+        return {
+          ...state,
+          appliedCoupon: newCoupons.length > 0 ? newCoupons[newCoupons.length - 1] : null,
+          appliedCoupons: newCoupons,
+          couponCode: newCodes.length > 0 ? newCodes.join(', ') : null,
+          couponCodes: newCodes,
+        }
+      }
+      return { ...state, appliedCoupon: null, appliedCoupons: [], couponCode: null, couponCodes: [] }
+    }
     default:
       return state
   }
@@ -79,7 +105,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 interface CartContextType {
   items: CartItem[]
   appliedCoupon: CouponValidation | null
+  appliedCoupons: CouponValidation[]
   couponCode: string | null
+  couponCodes: string[]
   itemCount: number
   subtotal: number
   discount: number
@@ -91,13 +119,13 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
   applyCoupon: (code: string, validation: CouponValidation) => void
-  removeCoupon: () => void
+  removeCoupon: (code?: string) => void
 }
 
 const CartContext = createContext<CartContextType | null>(null)
 
 function loadStoredCart(): CartState {
-  const emptyCart = { items: [], appliedCoupon: null, couponCode: null }
+  const emptyCart = { items: [], appliedCoupon: null, appliedCoupons: [], couponCode: null, couponCodes: [] }
   if (typeof window === 'undefined') return emptyCart
 
   try {
@@ -110,10 +138,19 @@ function loadStoredCart(): CartState {
       return emptyCart
     }
 
+    const couponCodes = parsed.couponCodes ?? (parsed.couponCode ? [parsed.couponCode] : [])
+    const rawAppliedCoupons = parsed.appliedCoupons ?? (parsed.appliedCoupon ? [parsed.appliedCoupon] : [])
+    const appliedCoupons = rawAppliedCoupons.map((coupon, index) => ({
+      ...coupon,
+      code: coupon.code ?? couponCodes[index],
+    }))
+
     return {
       items: Array.isArray(parsed.items) ? parsed.items : [],
-      appliedCoupon: parsed.appliedCoupon ?? null,
-      couponCode: parsed.couponCode ?? null,
+      appliedCoupon: parsed.appliedCoupon ?? (appliedCoupons.length > 0 ? appliedCoupons[appliedCoupons.length - 1] : null),
+      appliedCoupons,
+      couponCode: parsed.couponCode ?? (couponCodes.length > 0 ? couponCodes.join(', ') : null),
+      couponCodes,
     }
   } catch {
     window.localStorage.removeItem(CART_STORAGE_KEY)
@@ -126,7 +163,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { addToast } = useToast()
 
   useEffect(() => {
-    if (state.items.length === 0 && !state.appliedCoupon && !state.couponCode) {
+    if (state.items.length === 0 && state.appliedCoupons.length === 0 && state.couponCodes.length === 0) {
       window.localStorage.removeItem(CART_STORAGE_KEY)
       return
     }
@@ -143,9 +180,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return Math.round(state.items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100
   }, [state.items])
 
-  const isFreeShippingCoupon = useMemo(() => {
-    return !!(state.appliedCoupon?.isValid && state.appliedCoupon.discount?.target === 'shipping')
-  }, [state.appliedCoupon])
 
   const baseShipping = useMemo(() => {
     if (subtotal >= 100) return 0
@@ -153,19 +187,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [subtotal])
 
   const shippingDiscount = useMemo(() => {
-    if (isFreeShippingCoupon && state.appliedCoupon?.isValid && state.appliedCoupon.discount) {
-      return Math.min(baseShipping, state.appliedCoupon.discount.value)
-    }
-    return 0
-  }, [baseShipping, isFreeShippingCoupon, state.appliedCoupon])
+    let totalShippingDisc = 0
+    state.appliedCoupons.forEach((c) => {
+      if (c.isValid && c.discount?.target === 'shipping') {
+        const remaining = Math.max(0, baseShipping - totalShippingDisc)
+        if (c.discount.type === 'percentage') {
+          totalShippingDisc += (baseShipping * c.discount.value) / 100
+        } else {
+          totalShippingDisc += Math.min(remaining, c.discount.value)
+        }
+      }
+    })
+    return Math.min(baseShipping, totalShippingDisc)
+  }, [baseShipping, state.appliedCoupons])
 
   const discount = useMemo(() => {
-    if (isFreeShippingCoupon) return 0
-    if (state.appliedCoupon?.isValid && state.appliedCoupon.discount) {
-      return state.appliedCoupon.discount.appliedAmount
-    }
-    return 0
-  }, [state.appliedCoupon, isFreeShippingCoupon])
+    return state.appliedCoupons
+      .filter((c) => c.isValid && c.discount?.target !== 'shipping')
+      .reduce((sum, c) => sum + (c.discount?.appliedAmount || 0), 0)
+  }, [state.appliedCoupons])
 
   const shipping = useMemo(() => {
     return baseShipping - shippingDiscount
@@ -180,12 +220,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state.items])
 
   const applyServerCart = (cart: ServerCartResponse) => {
+    const couponCodes = cart.couponCodes ?? (cart.couponCode ? [cart.couponCode] : [])
+    const rawAppliedCoupons = cart.appliedCoupons ?? (cart.appliedCoupon ? [cart.appliedCoupon] : [])
+    const appliedCoupons = rawAppliedCoupons.map((coupon, index) => ({
+      ...coupon,
+      code: coupon.code ?? couponCodes[index],
+    }))
+
     dispatch({
       type: 'REPLACE_CART',
       payload: {
         items: cart.items,
-        appliedCoupon: cart.appliedCoupon ?? null,
-        couponCode: cart.couponCode ?? null,
+        appliedCoupon: cart.appliedCoupon ?? (appliedCoupons.length > 0 ? appliedCoupons[appliedCoupons.length - 1] : null),
+        appliedCoupons,
+        couponCode: cart.couponCode ?? (couponCodes.length > 0 ? couponCodes.join(', ') : null),
+        couponCodes,
       },
     })
 
@@ -198,6 +247,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cart: {
       items: state.items,
       couponCode: state.couponCode,
+      couponCodes: state.couponCodes,
     },
   })
 
@@ -276,14 +326,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const applyCoupon = (code: string, validation: CouponValidation) => {
     dispatch({ type: 'APPLY_COUPON', payload: { code, validation } })
   }
-  const removeCoupon = () => dispatch({ type: 'REMOVE_COUPON' })
+  const removeCoupon = (code?: string) => dispatch({ type: 'REMOVE_COUPON', payload: code })
 
   return (
     <CartContext.Provider
       value={{
         items: state.items,
         appliedCoupon: state.appliedCoupon,
+        appliedCoupons: state.appliedCoupons,
         couponCode: state.couponCode,
+        couponCodes: state.couponCodes,
         itemCount,
         subtotal,
         discount,

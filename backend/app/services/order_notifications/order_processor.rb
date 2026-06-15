@@ -1,13 +1,22 @@
 module OrderNotifications
   class OrderProcessor < IOrderSubject
     attr_reader :items, :activity_log, :stock_warnings
-    attr_accessor :coupon_code, :applied_coupon, :subtotal, :discount, :shipping_discount,
+    attr_accessor :coupon_code, :coupon_codes, :applied_coupon, :applied_coupons, :subtotal, :discount, :shipping_discount,
                   :shipping, :total, :last_event, :notification_message
 
-    def initialize(items: [], coupon_code: nil)
+    def initialize(items: [], coupon_code: nil, coupon_codes: nil)
       @items = items.map { |item| normalize_item(item) }
-      @coupon_code = coupon_code
+      codes_input = if coupon_codes.is_a?(Array)
+                      coupon_codes
+                    elsif coupon_code.present?
+                      coupon_code.to_s.split(',').map(&:strip)
+                    else
+                      []
+                    end
+      @coupon_codes = codes_input.map(&:upcase).reject(&:blank?).uniq
+      @coupon_code = @coupon_codes.last
       @applied_coupon = nil
+      @applied_coupons = []
       @subtotal = 0.0
       @discount = 0.0
       @shipping_discount = 0.0
@@ -85,7 +94,9 @@ module OrderNotifications
       @last_event = :cart_cleared
       @items = []
       @coupon_code = nil
+      @coupon_codes = []
       @applied_coupon = nil
+      @applied_coupons = []
 
       notifyObservers
       self
@@ -103,7 +114,9 @@ module OrderNotifications
       {
         items: @items.map { |item| serialize_item(item) },
         couponCode: @coupon_code,
+        couponCodes: @coupon_codes,
         appliedCoupon: @applied_coupon,
+        appliedCoupons: @applied_coupons,
         subtotal: @subtotal,
         discount: @discount,
         shippingDiscount: @shipping_discount,

@@ -51,13 +51,9 @@ module OrderNotifications
     end
 
     def apply_coupon(orderProcessor)
-      return clear_coupon(orderProcessor) if orderProcessor.coupon_code.blank?
-
-      promotion = Promotion.find_by("LOWER(\"promoCode\") = ?", orderProcessor.coupon_code.to_s.downcase)
-      return invalid_coupon(orderProcessor, "NOT_FOUND", "Coupon code was not found.") unless promotion
-      return invalid_coupon(orderProcessor, "EXPIRED", "Coupon is expired or inactive.") unless active?(promotion)
-      return invalid_coupon(orderProcessor, "MAX_USES", "Coupon usage limit has been reached.") if maxed_out?(promotion)
-      return invalid_coupon(orderProcessor, "NOT_APPLICABLE", "Coupon is not applicable to this cart.") unless category_matches?(promotion, orderProcessor)
+      orderProcessor.applied_coupons = []
+      orderProcessor.applied_coupon = nil
+      return if orderProcessor.coupon_codes.blank?
 
       resolved_items = orderProcessor.items.filter_map do |item|
         product = Product.find_by(productid: item[:product_id])
@@ -68,27 +64,76 @@ module OrderNotifications
       subtotal = orderProcessor.items.sum { |item| item[:price].to_f * item[:quantity].to_i }
       base_shipping = subtotal >= 100 ? 0.0 : (subtotal.positive? ? 10.0 : 0.0)
 
-      pricing = Promotions::BaseCartPricing.new(subtotal, base_shipping)
-      if promotion.discountTarget == 'shipping'
-        pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
-      elsif promotion.type == 'percentage'
-        pricing = Promotions::PercentageDiscountDecorator.new(pricing, promotion, resolved_items)
-      elsif promotion.type == 'fixed'
-        pricing = Promotions::FixedDiscountDecorator.new(pricing, promotion, resolved_items)
-      end
+      current_pricing = Promotions::BaseCartPricing.new(subtotal, base_shipping)
 
-      pricing.calculate_total
-      applied_amount = (promotion.discountTarget == 'shipping') ? pricing.shipping_discount : pricing.discount
+      orderProcessor.coupon_codes.each do |code|
+        promotion = Promotion.find_by("LOWER(\"promoCode\") = ?", code.to_s.downcase)
 
-      orderProcessor.applied_coupon = {
-        isValid: true,
-        discount: {
-          type: promotion.type,
-          value: promotion.discountValue.to_f,
-          appliedAmount: round_money(applied_amount),
-          target: promotion.discountTarget
+        unless promotion
+          orderProcessor.applied_coupons << {
+            code: code,
+            isValid: false,
+            errors: { code: "NOT_FOUND", message: "Promo code '#{code}' not found." }
+          }
+          next
+        end
+
+        unless active?(promotion)
+          orderProcessor.applied_coupons << {
+            code: code,
+            isValid: false,
+            errors: { code: "EXPIRED", message: "Promo code '#{code}' has expired or is inactive." }
+          }
+          next
+        end
+
+        if maxed_out?(promotion)
+          orderProcessor.applied_coupons << {
+            code: code,
+            isValid: false,
+            errors: { code: "MAX_USES", message: "Promo code '#{code}' usage limit has been reached." }
+          }
+          next
+        end
+
+        unless category_matches?(promotion, orderProcessor)
+          orderProcessor.applied_coupons << {
+            code: code,
+            isValid: false,
+            errors: { code: "NOT_APPLICABLE", message: "Promo code '#{code}' is not applicable to any items in your cart." }
+          }
+          next
+        end
+
+        prev_discount = current_pricing.discount
+        prev_shipping_discount = current_pricing.shipping_discount
+
+        if promotion.discountTarget == 'shipping'
+          current_pricing = Promotions::ShippingDiscountDecorator.new(current_pricing, promotion, resolved_items)
+          applied_amount = current_pricing.shipping_discount - prev_shipping_discount
+        elsif promotion.type == 'percentage'
+          current_pricing = Promotions::PercentageDiscountDecorator.new(current_pricing, promotion, resolved_items)
+          applied_amount = current_pricing.discount - prev_discount
+        elsif promotion.type == 'fixed'
+          current_pricing = Promotions::FixedDiscountDecorator.new(current_pricing, promotion, resolved_items)
+          applied_amount = current_pricing.discount - prev_discount
+        else
+          applied_amount = 0.0
+        end
+
+        val = {
+          code: code,
+          isValid: true,
+          discount: {
+            type: promotion.type,
+            value: promotion.discountValue.to_f,
+            appliedAmount: round_money(applied_amount),
+            target: promotion.discountTarget
+          }
         }
-      }
+        orderProcessor.applied_coupons << val
+        orderProcessor.applied_coupon = val
+      end
     end
 
     def recalculate_totals(orderProcessor)
@@ -101,13 +146,15 @@ module OrderNotifications
         { product: product, price: item[:price].to_f, quantity: item[:quantity].to_i }
       end
 
-      promotion = nil
-      if orderProcessor.applied_coupon&.dig(:isValid) && orderProcessor.coupon_code.present?
-        promotion = Promotion.find_by("LOWER(\"promoCode\") = ?", orderProcessor.coupon_code.to_s.downcase)
-      end
-
       pricing = Promotions::BaseCartPricing.new(orderProcessor.subtotal, base_shipping)
-      if promotion
+      valid_codes = orderProcessor.applied_coupons.select { |c| c[:isValid] }.map { |c| c[:code].to_s.downcase }
+
+      orderProcessor.coupon_codes.each do |code|
+        next unless valid_codes.include?(code.to_s.downcase)
+
+        promotion = Promotion.find_by("LOWER(\"promoCode\") = ?", code.to_s.downcase)
+        next unless promotion
+
         if promotion.discountTarget == 'shipping'
           pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
         elsif promotion.type == 'percentage'
@@ -175,6 +222,7 @@ module OrderNotifications
 
     def clear_coupon(orderProcessor)
       orderProcessor.applied_coupon = nil
+      orderProcessor.applied_coupons = []
     end
 
     def round_money(value)
