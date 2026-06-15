@@ -179,6 +179,12 @@ module Api
         return
       end
 
+      begin
+        OrderMailer.receipt(order).deliver_now
+      rescue => e
+        Rails.logger.error("Failed to send order receipt email for order ##{order.orderid}: #{e.message}")
+      end
+
       response_payload = order.serialize_for_api
       response_payload[:paymentMethod] = {
         type:     method_type,

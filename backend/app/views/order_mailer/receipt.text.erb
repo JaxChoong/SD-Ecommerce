@@ -1,0 +1,34 @@
+EZ-Shop Order Receipt
+========================================
+Order ID: #<%= @order.orderid %>
+Date: <%= @order.createdAt.in_time_zone('Asia/Kuala_Lumpur').strftime('%B %d, %Y %I:%M %p') %>
+Payment Method: <%= @order.paymentMethod.to_s.gsub('_', ' ').upcase %>
+
+Billed To:
+----------------------------------------
+<%= @customer.name %>
+Phone: <%= @customer.phone %>
+Address:
+<%= @customer.shoppingAddress %>
+
+Items Ordered:
+----------------------------------------
+<% @order_items.each do |item| %>
+* <%= item.product&.name %> (Size: <%= item.product&.size %>)
+  Qty: <%= item.quantity %> @ <%= number_to_currency(item.unitPrice) %> each
+  Subtotal: <%= number_to_currency(item.subtotal) %>
+<% end %>
+
+Summary:
+----------------------------------------
+Subtotal:          <%= number_to_currency(@order.subtotal) %>
+<% if @order.item_discount > 0 %>
+Discount:         -<%= number_to_currency(@order.item_discount) %>
+<% end %>
+Shipping:          <%= @order.shipping_cost == 0 ? "FREE" : number_to_currency(@order.shipping_cost) %>
+----------------------------------------
+Total Paid:        <%= number_to_currency(@order.finalTotal) %>
+
+========================================
+Thank you for your purchase!
+If you have any questions or concerns, please reply to this email or contact support.
