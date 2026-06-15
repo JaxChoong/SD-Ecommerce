@@ -46,11 +46,12 @@ class ProductsController < ApplicationController
     # Fetch by productid if numeric, else decode slug to match name
     product = if params[:id].match?(/^\d+$/)
                 Product.find_by(productid: params[:id])
-    else
-                # Match slug by replacing hyphens and checking case-insensitively
-                decoded_name = params[:id].gsub("-", " ")
-                Product.where("LOWER(name) = ?", decoded_name.strip.downcase).first
-    end
+              else
+                target_slug = params[:id].to_s.strip.downcase
+                Product.all.find do |p|
+                  p.name.downcase.strip.gsub(/[^a-z0-9]+/, "-").gsub(/-+$/, "") == target_slug
+                end
+              end
 
     if product
       render json: {
