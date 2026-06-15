@@ -140,6 +140,7 @@ export interface OrderItemRecord {
   unitPrice: number;
   quantity: number;
   subtotal: number;
+  size?: string;
 }
 
 export interface PaymentRecord {

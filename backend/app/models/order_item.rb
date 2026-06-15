@@ -20,7 +20,8 @@ class OrderItem < ApplicationRecord
       productImage: product&.image,
       unitPrice: unitPrice.to_f,
       quantity: quantity,
-      subtotal: subtotal
+      subtotal: subtotal,
+      size: size
     }
   end
 end

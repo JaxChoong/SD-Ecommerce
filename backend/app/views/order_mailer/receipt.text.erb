@@ -14,7 +14,7 @@ Address:
 Items Ordered:
 ----------------------------------------
 <% @order_items.each do |item| %>
-* <%= item.product&.name %> (Size: <%= item.product&.size %>)
+* <%= item.product&.name %><%= " (Size: #{item.size})" if item.size.present? %>
   Qty: <%= item.quantity %> @ <%= number_to_currency(item.unitPrice) %> each
   Subtotal: <%= number_to_currency(item.subtotal) %>
 <% end %>

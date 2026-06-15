@@ -33,6 +33,7 @@ interface RawOrderItem {
   unitPrice: number | string
   quantity: number | string
   subtotal?: number | string
+  size?: string
 }
 
 interface RawPayment {
@@ -78,6 +79,7 @@ function normalizeOrderItem(i: RawOrderItem): OrderItemRecord {
     unitPrice: Number(i.unitPrice),
     quantity: Number(i.quantity),
     subtotal: i.subtotal !== undefined ? Number(i.subtotal) : Number(i.unitPrice) * Number(i.quantity),
+    size: i.size,
   }
 }
 

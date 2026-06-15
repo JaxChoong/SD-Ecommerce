@@ -4,7 +4,7 @@ module Api
 
     def create
       customer_params  = params.require(:customer).permit(:name, :email, :phone, :shoppingAddress)
-      items_params     = params.require(:items).map { |item| item.permit(:productId, :quantity, :unitPrice).to_h }
+      items_params     = params.require(:items).map { |item| item.permit(:productId, :quantity, :unitPrice, :size).to_h }
       payment_params   = params.require(:paymentMethod).permit(:type, :provider, :bank).to_h
       coupon_codes = if params[:couponCodes].is_a?(Array)
                        params[:couponCodes]
@@ -119,7 +119,8 @@ module Api
               order:     order,
               product:   product,
               quantity:  item["quantity"].to_i,
-              unitPrice: item["unitPrice"].to_f
+              unitPrice: item["unitPrice"].to_f,
+              size:      item["size"]
             )
           end
 

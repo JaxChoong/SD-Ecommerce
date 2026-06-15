@@ -40,14 +40,16 @@ class OrderMailerTest < ActionMailer::TestCase
       order: order,
       product: product1,
       quantity: 1,
-      unitPrice: 49.90
+      unitPrice: 49.90,
+      size: "M"
     )
 
     OrderItem.create!(
       order: order,
       product: product2,
       quantity: 1,
-      unitPrice: 79.90
+      unitPrice: 79.90,
+      size: "32"
     )
 
     # Trigger mailer

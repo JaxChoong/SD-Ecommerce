@@ -220,7 +220,7 @@ export default function AdminPurchases() {
                                 {item.productName}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Qty: {item.quantity} • RM{item.unitPrice.toFixed(2)} each
+                                Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''} • RM{item.unitPrice.toFixed(2)} each
                               </p>
                             </div>
                             <div className="text-right shrink-0">

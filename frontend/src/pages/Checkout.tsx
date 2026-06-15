@@ -84,6 +84,7 @@ export default function Checkout() {
           productId: i.productId,
           quantity: i.quantity,
           unitPrice: i.price,
+          size: i.size,
         })),
         paymentMethod: {
           type: paymentMethod.type,
