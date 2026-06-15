@@ -24,5 +24,6 @@ end
     resources :inventory, only: [ :index, :show, :create, :update, :destroy ]
     resources :promotions, only: [ :index, :show, :create, :update, :destroy ]
     resources :orders, only: [ :index, :show ]
+    get "analytics", to: "analytics#index"
   end
 end

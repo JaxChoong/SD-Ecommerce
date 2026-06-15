@@ -67,45 +67,38 @@ export function Header() {
               </button>
             )}
 
-            {/* Profile Dropdown */}
-            <div className="relative">
+            {role === 'admin' ? (
               <button
-                onClick={() => setAdminOpen(!adminOpen)}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                aria-label="Account"
+                onClick={handleLogout}
+                className="p-2 text-error hover:text-error/80 transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Sign Out"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
+                <LogOut className="h-5 w-5" />
               </button>
-              {adminOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setAdminOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-radius border border-border bg-surface-raised py-1 shadow-lg">
-                    {role === 'admin' ? (
-                      <>
-                        <Link to="/admin" className="block px-4 py-2 text-sm hover:bg-surface font-medium" onClick={() => setAdminOpen(false)}>Admin Dashboard</Link>
-                        <Link to="/admin/products" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Manage Products</Link>
-                        <Link to="/admin/coupons" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Manage Coupons</Link>
-                        <Link to="/admin/purchases" className="block px-4 py-2 text-sm hover:bg-surface" onClick={() => setAdminOpen(false)}>Recent Orders</Link>
-                        <div className="border-t border-border my-1" />
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-1.5 w-full text-left px-4 py-2 text-sm text-error hover:bg-surface cursor-pointer"
-                        >
-                          <LogOut className="h-4 w-4" /> Sign Out
-                        </button>
-                      </>
-                    ) : (
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setAdminOpen(!adminOpen)}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  aria-label="Account"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </button>
+                {adminOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setAdminOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-radius border border-border bg-surface-raised py-1 shadow-lg">
                       <Link to="/admin/login" className="block px-4 py-2 text-sm hover:bg-surface text-primary" onClick={() => setAdminOpen(false)}>
                         Admin Portal
                       </Link>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Shopping Cart only for customers */}
             {role !== 'admin' && (
