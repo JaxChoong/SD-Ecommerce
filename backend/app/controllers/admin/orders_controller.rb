@@ -29,7 +29,14 @@ module Admin
         status: order.status,
         finalTotal: order.finalTotal.to_f,
         paymentMethod: order.paymentMethod,
-        createdAt: order.createdAt&.iso8601
+        createdAt: order.createdAt&.iso8601,
+        orderPromotions: order.order_promotions.includes(:promotion).map do |op|
+          {
+            code: op.promotion&.promoCode,
+            discountTarget: op.promotion&.discountTarget,
+            discountApplied: op.discountApplied.to_f
+          }
+        end
       }
     end
   end

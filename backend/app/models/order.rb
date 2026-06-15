@@ -21,7 +21,14 @@ class Order < ApplicationRecord
       status: status,
       finalTotal: finalTotal.to_f,
       paymentMethod: paymentMethod,
-      createdAt: createdAt.iso8601
+      createdAt: createdAt.iso8601,
+      orderPromotions: order_promotions.includes(:promotion).map do |op|
+        {
+          code: op.promotion&.promoCode,
+          discountTarget: op.promotion&.discountTarget,
+          discountApplied: op.discountApplied.to_f
+        }
+      end
     }
   end
 end

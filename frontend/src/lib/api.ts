@@ -17,6 +17,11 @@ interface RawOrder {
     | { type: PaymentMethodType; provider?: string | null; bank?: string | null }
     | string
   createdAt: string
+  orderPromotions?: {
+    code: string
+    discountTarget: 'base_price' | 'shipping'
+    discountApplied: number | string
+  }[]
 }
 
 interface RawOrderItem {
@@ -50,6 +55,11 @@ export function normalizeOrder(r: RawOrder): OrderRecord {
     finalTotal: Number(r.finalTotal),
     paymentMethod: r.paymentMethod,
     createdAt: r.createdAt,
+    orderPromotions: (r.orderPromotions || []).map((p) => ({
+      code: p.code,
+      discountTarget: p.discountTarget,
+      discountApplied: Number(p.discountApplied),
+    })),
   }
 }
 

@@ -133,12 +133,34 @@ export default function AdminPurchases() {
             {paginatedOrders.map((order) => {
               const pm = order.paymentMethod;
               const paymentType =
-                typeof pm === "object" && pm !== null && "type" in pm ? pm.type : "credit_card";
+                typeof pm === "object" && pm !== null && "type" in pm
+                  ? pm.type
+                  : pm || (order.payment?.method) || "credit_card";
+
+              const displayPaymentType = (() => {
+                const typeStr = String(paymentType).toLowerCase();
+                if (typeStr === 'ewallet') return 'E-Wallet';
+                if (typeStr === 'online_banking') return 'Online Banking';
+                if (typeStr === 'credit_card' || typeStr === 'card') return 'Credit Card';
+                return typeStr.replace('_', ' ');
+              })();
+
               const itemsSubtotal = order.items.reduce(
                 (s, i) => s + i.subtotal,
                 0,
               );
-              const shippingFee = Math.max(0, +(order.finalTotal - itemsSubtotal).toFixed(2));
+
+              const appliedPromos = order.orderPromotions || [];
+              const discountAmount = appliedPromos
+                .filter((p) => p.discountTarget === "base_price")
+                .reduce((sum, p) => sum + p.discountApplied, 0);
+              const shippingDiscountAmount = appliedPromos
+                .filter((p) => p.discountTarget === "shipping")
+                .reduce((sum, p) => sum + p.discountApplied, 0);
+
+              const baseShipping = itemsSubtotal >= 100 ? 0 : (itemsSubtotal > 0 ? 10 : 0);
+              const shippingFee = Math.max(0, baseShipping - shippingDiscountAmount);
+              const couponCodesStr = appliedPromos.map((p) => p.code).join(", ");
 
               return (
                 <Card
@@ -210,13 +232,25 @@ export default function AdminPurchases() {
                         ))}
                       </div>
 
-                      <div className="border-t border-border/30 pt-3 flex flex-col items-end gap-1.5 text-sm">
+                      <div className="border-t border-border/30 pt-3 flex flex-col items-end gap-1.5 text-sm w-full">
+                        {appliedPromos.length > 0 && (
+                          <div className="w-full max-w-xs space-y-1 text-xs text-muted-foreground border-b border-border/20 pb-2 mb-2">
+                            <p className="font-semibold text-foreground text-left">Applied Coupons:</p>
+                            {appliedPromos.map((promo, idx) => (
+                              <div key={idx} className="flex justify-between text-success">
+                                <span>{promo.code} ({promo.discountTarget === "shipping" ? "Shipping" : "Discount"})</span>
+                                <span>-RM{promo.discountApplied.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <PricingSummary
                           subtotal={itemsSubtotal}
-                          discount={0}
-                          shippingDiscount={0}
+                          discount={discountAmount}
+                          shippingDiscount={shippingDiscountAmount}
                           shipping={shippingFee}
                           total={order.finalTotal}
+                          couponCode={couponCodesStr}
                           totalLabel="Total Paid"
                           className="w-full max-w-xs"
                         />
@@ -259,8 +293,8 @@ export default function AdminPurchases() {
                       <div className="pt-2 border-t border-border/20">
                         <p className="text-xs text-muted-foreground">
                           Payment Method:{" "}
-                          <span className="font-medium text-foreground capitalize">
-                            {String(paymentType).replace("_", " ")}
+                          <span className="font-medium text-foreground">
+                            {displayPaymentType}
                           </span>
                         </p>
                         {order.payment && (

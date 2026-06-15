@@ -161,4 +161,9 @@ export interface OrderRecord {
   finalTotal: number;
   paymentMethod: string | PaymentMethod | { type: PaymentMethodType; provider?: string | null; bank?: string | null };
   createdAt: string;
+  orderPromotions?: {
+    code: string;
+    discountTarget: 'base_price' | 'shipping';
+    discountApplied: number;
+  }[];
 }
