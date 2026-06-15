@@ -49,6 +49,21 @@ export default function ProductListing() {
     setSearchParams(params, { replace: true })
   }
 
+  const updatePriceRange = (min: number | undefined, max: number | undefined) => {
+    const params = new URLSearchParams(searchParams)
+    if (min !== undefined) {
+      params.set('minPrice', min.toString())
+    } else {
+      params.delete('minPrice')
+    }
+    if (max !== undefined) {
+      params.set('maxPrice', max.toString())
+    } else {
+      params.delete('maxPrice')
+    }
+    setSearchParams(params, { replace: true })
+  }
+
   const clearAllFilters = () => {
     setSearchParams({}, { replace: true })
   }
@@ -163,9 +178,8 @@ export default function ProductListing() {
         <div className="mb-6 bg-surface rounded-radius p-6">
           <ProductFilters
             minPrice={minPrice}
-            onMinPriceChange={(p) => updateParam('minPrice', p?.toString())}
             maxPrice={maxPrice}
-            onMaxPriceChange={(p) => updateParam('maxPrice', p?.toString())}
+            onPriceChange={updatePriceRange}
             inStock={inStock}
             onInStockChange={(c) => updateParam('inStock', c ? 'true' : undefined)}
             onSale={onSale}
@@ -182,7 +196,7 @@ export default function ProductListing() {
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-muted-foreground">No products found.</p>
+          <p className="text-muted-foreground">No Products match the selected filters.</p>
           <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or browse all products.</p>
           <button onClick={clearAllFilters} className="text-sm text-primary underline mt-4">Clear all filters</button>
         </div>

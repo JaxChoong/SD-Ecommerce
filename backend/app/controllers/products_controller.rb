@@ -12,6 +12,23 @@ class ProductsController < ApplicationController
       products = products.where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", q, q)
     end
 
+    if params[:minPrice].present?
+      products = products.where("\"basePrice\" >= ?", params[:minPrice].to_f)
+    end
+
+    if params[:maxPrice].present?
+      products = products.where("\"basePrice\" <= ?", params[:maxPrice].to_f)
+    end
+
+    if params[:inStock] == "true"
+      products = products.where("\"stockQuantity\" > 0")
+    end
+
+    if params[:onSale] == "true"
+      # There is no originalPrice column in db schema, so no products are on sale
+      products = products.none
+    end
+
     if params[:sort] == "price-asc"
       products = products.order(basePrice: :asc)
     elsif params[:sort] == "price-desc"

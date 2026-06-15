@@ -4,9 +4,8 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 
 interface ProductFiltersProps {
   minPrice: number | undefined
-  onMinPriceChange: (price: number | undefined) => void
   maxPrice: number | undefined
-  onMaxPriceChange: (price: number | undefined) => void
+  onPriceChange: (min: number | undefined, max: number | undefined) => void
   inStock: boolean
   onInStockChange: (checked: boolean) => void
   onSale: boolean
@@ -23,9 +22,8 @@ const priceRanges = [
 
 export function ProductFilters({
   minPrice,
-  onMinPriceChange,
   maxPrice,
-  onMaxPriceChange,
+  onPriceChange,
   inStock,
   onInStockChange,
   onSale,
@@ -43,8 +41,7 @@ export function ProductFilters({
           value={String(priceKey >= 0 ? priceKey : 0)}
           onValueChange={(v) => {
             const idx = Number(v)
-            onMinPriceChange(priceRanges[idx].min)
-            onMaxPriceChange(priceRanges[idx].max)
+            onPriceChange(priceRanges[idx].min, priceRanges[idx].max)
           }}
         >
           {priceRanges.map((range, i) => (
