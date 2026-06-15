@@ -321,7 +321,11 @@ export default function AdminProductForm() {
           </div>
           <div>
             <Label htmlFor="basePrice">Base Price (RM)</Label>
-            <Input id="basePrice" type="number" step="0.01" value={form.basePrice} onChange={(e) => update('basePrice', e.target.value)} required />
+            <Input id="basePrice" type="number" step="0.01" max="99999999.99" value={form.basePrice} onChange={(e) => {
+              let val = e.target.value;
+              if (Number(val) > 99999999.99) val = "99999999.99";
+              update('basePrice', val);
+            }} required />
           </div>
           
           <div className="sm:col-span-2 space-y-2">

@@ -165,7 +165,12 @@ export default function AdminCouponForm() {
           </div>
           <div>
             <Label htmlFor="discountValue">{form.discountType === 'percentage' ? 'Discount (%)' : 'Discount (RM)'}</Label>
-            <Input id="discountValue" type="number" step="0.01" value={form.discountValue} onChange={(e) => update('discountValue', e.target.value)} required />
+            <Input id="discountValue" type="number" step="0.01" max={form.discountType === 'percentage' ? "100" : "99999999.99"} value={form.discountValue} onChange={(e) => {
+              let val = e.target.value;
+              const maxVal = form.discountType === 'percentage' ? 100 : 99999999.99;
+              if (Number(val) > maxVal) val = String(maxVal);
+              update('discountValue', val);
+            }} required />
           </div>
           <div className="flex items-center gap-2 sm:col-span-2">
             <Checkbox id="isActive" checked={form.isActive} onCheckedChange={(c) => update('isActive', c === true)} />
