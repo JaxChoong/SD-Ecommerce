@@ -112,13 +112,15 @@ export function Header() {
               </Link>
             )}
 
-            <button
-              className="md:hidden p-2 text-muted-foreground hover:text-foreground cursor-pointer"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Menu"
-            >
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {role !== 'admin' && (
+              <button
+                className="md:hidden p-2 text-muted-foreground hover:text-foreground cursor-pointer"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Menu"
+              >
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            )}
           </div>
         </div>
 
@@ -141,20 +143,7 @@ export function Header() {
         {menuOpen && (
           <div className="md:hidden border-t border-border py-3">
             <nav className="flex flex-col gap-2">
-              {role === 'admin' ? (
-                <>
-                  <Link to="/admin" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
-                  <Link to="/admin/products" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Products</Link>
-                  <Link to="/admin/coupons" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Coupons</Link>
-                  <Link to="/admin/purchases" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Recent Orders</Link>
-                  <button
-                    onClick={() => { handleLogout(); setMenuOpen(false); }}
-                    className="flex items-center gap-1.5 px-2 py-2 text-sm text-left text-error hover:text-primary cursor-pointer"
-                  >
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </button>
-                </>
-              ) : (
+              {role !== 'admin' && (
                 <>
                   <Link to="/products" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Shop</Link>
                   <Link to="/coupons" className="px-2 py-2 text-sm hover:text-primary" onClick={() => setMenuOpen(false)}>Coupons</Link>
