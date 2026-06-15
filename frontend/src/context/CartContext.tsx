@@ -149,7 +149,7 @@ function loadStoredCart(): CartState {
       items: Array.isArray(parsed.items) ? parsed.items : [],
       appliedCoupon: parsed.appliedCoupon ?? (appliedCoupons.length > 0 ? appliedCoupons[appliedCoupons.length - 1] : null),
       appliedCoupons,
-      couponCode: parsed.couponCode ?? (couponCodes.length > 0 ? couponCodes.join(', ') : null),
+      couponCode: couponCodes.length > 0 ? couponCodes.join(', ') : null,
       couponCodes,
     }
   } catch {
@@ -233,7 +233,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items: cart.items,
         appliedCoupon: cart.appliedCoupon ?? (appliedCoupons.length > 0 ? appliedCoupons[appliedCoupons.length - 1] : null),
         appliedCoupons,
-        couponCode: cart.couponCode ?? (couponCodes.length > 0 ? couponCodes.join(', ') : null),
+        couponCode: couponCodes.length > 0 ? couponCodes.join(', ') : null,
         couponCodes,
       },
     })

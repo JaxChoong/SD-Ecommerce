@@ -32,7 +32,7 @@ const EMPTY_CUSTOMER: Customer = { name: '', email: '', phone: '', shoppingAddre
 
 export default function Checkout() {
   const navigate = useNavigate()
-  const { items, clearCart, subtotal, shipping, discount, shippingDiscount, total, couponCode } = useCart()
+  const { items, clearCart, subtotal, shipping, discount, shippingDiscount, total, couponCode, couponCodes } = useCart()
 
   const [step, setStep] = useState<'shipping' | 'payment' | 'review'>('shipping')
   const [customer, setCustomer] = useState<Customer>(EMPTY_CUSTOMER)
@@ -92,6 +92,7 @@ export default function Checkout() {
         },
         amount: total,
         ...(couponCode ? { couponCode } : {}),
+        couponCodes,
       }
       const result = await processCheckout(payload)
       const orderId = result?.payment?.transactionId || result?.orderId || `ORD-${Date.now().toString().slice(-6)}`

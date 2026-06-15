@@ -30,7 +30,7 @@ export function PricingSummary({
         </div>
         {discount > 0 && (
           <div className="flex justify-between text-success">
-            <span>Discount {couponCode && !shippingDiscount ? `(${couponCode})` : ''}</span>
+            <span>Discount {couponCode ? `(${couponCode})` : ''}</span>
             <span>-RM{discount.toFixed(2)}</span>
           </div>
         )}
