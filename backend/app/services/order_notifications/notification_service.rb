@@ -1,5 +1,8 @@
 module OrderNotifications
   class NotificationService < IOrderObserver
+    # SOLID Principle: SRP (Single Responsibility Principle)
+    # NotificationService is solely responsible for processing cart calculations,
+    # stock checks, and toast notification formatting. It has no responsibility for cart mutation logic.
     def update(orderProcessor)
       # OBSERVER PATTERN IMPLEMENTATION:
       # NotificationService is the Observer. OrderProcessor.notifyObservers()

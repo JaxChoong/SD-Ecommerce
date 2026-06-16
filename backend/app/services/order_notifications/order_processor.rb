@@ -37,10 +37,14 @@ module OrderNotifications
       @observers.delete(observer)
     end
 
+    # SOLID Principle: ISP (Interface Segregation Principle)
+    # The OrderProcessor subject interacts with observers strictly through the IOrderObserver
+    # interface contract (#update method), rather than depending on concrete service methods.
     def notifyObservers
       # OBSERVER PATTERN BREAKPOINT
       # Place debugger here during presentation.
       # Cart state changed -> notifyObservers() is executed.
+      debugger if Rails.env.development?
       @observers.each { |observer| observer.update(self) }
     end
 

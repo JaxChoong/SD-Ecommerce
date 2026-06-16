@@ -5,8 +5,13 @@ module Admin
       @token = token
     end
 
-    # Intercept method calls, validate session token, and delegate if authorized.
+    # SOLID Principle: DIP (Dependency Inversion Principle)
+    # The ServiceProxy depends on abstraction (Ruby's dynamic method dispatch) to control access
+    # to any backend service. It doesn't compile-time couple itself to InventoryService or PromotionService.
     def method_missing(method_name, *args, &block)
+      # PROXY PATTERN BREAKPOINT
+      # Place debugger here to demonstrate Protection Proxy intercepting service method calls.
+      debugger if Rails.env.development?
       if AdminSessionManager.instance.validate_session(@token)
         @real_service.send(method_name, *args, &block)
       else

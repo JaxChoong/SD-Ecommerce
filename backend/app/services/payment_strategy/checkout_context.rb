@@ -10,7 +10,14 @@ module PaymentStrategy
       @payment_strategy = strategy
     end
 
+    # SOLID Principle: OCP (Open/Closed Principle) - New payment processors can be added
+    # without modifying the CheckoutContext class itself (just add a strategy).
+    # SOLID Principle: LSP (Liskov Substitution Principle) - Any strategy inheriting
+    # from PaymentStrategy can be used here interchangeably without side effects.
     def execute_checkout(amount)
+      # STRATEGY PATTERN BREAKPOINT
+      # Place debugger here to show dynamic delegation to the selected payment strategy.
+      debugger if Rails.env.development?
       if @payment_strategy.nil?
         puts "No payment method selected."
         return { success: false, error: "No payment method selected." }

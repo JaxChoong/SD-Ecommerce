@@ -27,15 +27,22 @@ class AdminSessionManager
 
   # Starts a new session, returning the token. This automatically clears any previous active token.
   def start_session(username)
+    # SINGLETON PATTERN BREAKPOINT (Session Generation)
+    # Place debugger here to show the singleton initializing the unique global token.
+    debugger if Rails.env.development?
     token = SecureRandom.hex(32)
     self.active_token = token
     self.expires_at = 2.hours.from_now
     token
   end
 
-  # Validates the token. Returns true if valid, false if expired or mismatch.
-  # Implements sliding expiration on successful verification.
+  # SOLID Principle: SRP (Single Responsibility Principle)
+  # AdminSessionManager has only one reason to change: modifications to administrator session
+  # authentication policies or token validation logic.
   def validate_session(token)
+    # SINGLETON PATTERN BREAKPOINT
+    # Place debugger here to verify we are accessing the single shared session store instance.
+    debugger if Rails.env.development?
     return false if token.blank?
     return false if active_token.nil? || active_token != token
 
