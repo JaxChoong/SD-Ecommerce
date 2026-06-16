@@ -1,6 +1,7 @@
 module PaymentStrategy
   class CreditCardStrategy < PaymentStrategy
     def process_payment(amount)
+      debugger if Rails.env.development?
       puts "[CreditCardStrategy] Processing credit card payment of RM #{format('%.2f', amount)}"
       sleep(rand(0.2..0.5))
 

@@ -1,6 +1,7 @@
 module PaymentStrategy
   class OnlineBankingStrategy < PaymentStrategy
     def process_payment(amount)
+      debugger if Rails.env.development?
       puts "[OnlineBankingStrategy] Processing online banking payment of RM #{format('%.2f', amount)}"
       sleep(rand(0.3..0.6))
 

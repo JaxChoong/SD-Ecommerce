@@ -1,6 +1,7 @@
 module PaymentStrategy
   class EwalletStrategy < PaymentStrategy
     def process_payment(amount)
+      debugger if Rails.env.development?
       puts "[EWalletStrategy] Processing e-wallet payment of RM #{format('%.2f', amount)}"
       sleep(rand(0.1..0.3))
 

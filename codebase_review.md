@@ -492,8 +492,12 @@ To easily show your tutor where patterns and SOLID principles are executed in th
 
 ### Breakpoint 3: Strategy Pattern (Payment Processing)
 
-- **File**: **[checkout_context.rb](file:///home/caedussolo/sd/backend/app/services/payment_strategy/checkout_context.rb#L13-L30)**
-- **Method**: `PaymentStrategy::CheckoutContext#execute_checkout`
+- **Files**: 
+  - **[checkout_context.rb](file:///home/caedussolo/sd/backend/app/services/payment_strategy/checkout_context.rb)**
+  - **[credit_card_strategy.rb](file:///home/caedussolo/sd/backend/app/services/payment_strategy/credit_card_strategy.rb)**
+  - **[ewallet_strategy.rb](file:///home/caedussolo/sd/backend/app/services/payment_strategy/ewallet_strategy.rb)**
+  - **[online_banking_strategy.rb](file:///home/caedussolo/sd/backend/app/services/payment_strategy/online_banking_strategy.rb)**
+- **Methods**: `PaymentStrategy::CheckoutContext#execute_checkout` and concrete strategy `process_payment` implementations.
 - **SOLID Principle**: **OCP (Open/Closed Principle)** and **LSP (Liskov Substitution Principle)**. Different payment strategies (e.g. Credit Card, E-Wallet) are substituted cleanly into the context object.
 - **Trigger**: Complete order billing and click `Place Order` in checkout.
 
