@@ -33,6 +33,10 @@ module Promotions
         current_total = 0.0
       end
 
+      # STRATEGY PATTERN BREAKPOINT
+      # Place debugger here to show dynamic delegation to the selected discount strategy.
+      debugger if Rails.env.development?
+      
       @discount_strategy.apply_discount(current_total)
     end
 
