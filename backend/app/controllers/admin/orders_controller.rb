@@ -4,12 +4,16 @@ module Admin
 
     # GET /admin/orders
     def index
+      debugger if Rails.env.development?
+      # method called through proxy
       orders = @proxy.list_orders
       render json: orders.map { |o| serialize_order(o) }
     end
 
     # GET /admin/orders/:id
     def show
+      debugger if Rails.env.development?
+      # method called through proxy
       order = @proxy.get_order(params[:id])
       render json: serialize_order(order, detailed: true)
     end

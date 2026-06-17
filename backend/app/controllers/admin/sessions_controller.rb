@@ -10,6 +10,8 @@ module Admin
       admin = ::Administrator.find_by(username: params[:username])
 
       if admin&.authenticate(params[:password])
+        debugger if Rails.env.development?
+        # AdminSessionManager constructor is called here
         token = AdminSessionManager.instance.start_session(admin.username)
         render json: {
           token: token,

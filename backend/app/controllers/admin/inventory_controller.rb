@@ -10,12 +10,16 @@ module Admin
         minPrice: params[:minPrice],
         maxPrice: params[:maxPrice]
       }
+      debugger if Rails.env.development?
+      # method called through proxy
       products = @proxy.list_products(filters)
       render json: products
     end
 
     # GET /admin/inventory/:id
     def show
+      debugger if Rails.env.development?
+      # method called through proxy
       product = @proxy.get_product(params[:id])
       render json: product
     end
@@ -36,6 +40,8 @@ module Admin
         return
       end
 
+      debugger if Rails.env.development?
+      # method called through proxy
       product = @proxy.create_product(product_data)
       render json: product, status: :created
     end
@@ -58,12 +64,16 @@ module Admin
         end
       end
 
+      debugger if Rails.env.development?
+      # method called through proxy
       product = @proxy.update_product(params[:id], product_data)
       render json: product
     end
 
     # DELETE /admin/inventory/:id
     def destroy
+      debugger if Rails.env.development?
+      # method called through proxy
       @proxy.delete_product(params[:id])
       head :no_content
     end

@@ -5,6 +5,7 @@ class AdminSessionManager
   include Singleton
 
   def initialize
+    # Constructor for AdminSessionManager
     # Back the session state in a global variable so it survives class reloading in development mode
     $admin_active_session ||= { token: nil, expires_at: nil }
   end
