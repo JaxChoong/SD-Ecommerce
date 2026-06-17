@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { Container } from "../../components/layout/container";
 import { Button } from "../../components/ui/button";
@@ -68,12 +68,25 @@ const getProductImage = (p: { category?: string }) => {
 
 export default function AdminProducts() {
   const { adminToken } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const stored = sessionStorage.getItem('ezshop_admin_products')
+    if (stored) {
+      try {
+        return JSON.parse(stored)
+      } catch (e) {
+        console.error('Failed to parse cached products', e)
+      }
+    }
+    return []
+  })
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const stored = sessionStorage.getItem('ezshop_admin_products')
+    return !stored
+  })
   const [currentPage, setCurrentPage] = useState(1);
   const [prevFilters, setPrevFilters] = useState({
     search: "",
@@ -140,8 +153,15 @@ export default function AdminProducts() {
       .finally(() => setLoading(false));
   };
 
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (products.length > 0) {
+        return;
+      }
+    }
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, selectedCategory, minPrice, maxPrice, adminToken]);

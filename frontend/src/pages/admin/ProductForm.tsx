@@ -5,8 +5,8 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useAuth } from '../../context/AuthContext'
+import { ChevronDown } from 'lucide-react'
 
 const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dresses']
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size']
@@ -61,8 +61,9 @@ export default function AdminProductForm() {
   const location = useLocation()
 
   const populateProduct = (p: any) => {
+    const rawCategory = (p.category || '').toLowerCase().trim()
     const normalizedCategory = categories.find(
-      (cat) => cat.toLowerCase() === (p.category || '').toLowerCase()
+      (cat) => cat.toLowerCase() === rawCategory
     ) || 'Shirts'
 
     setForm({
@@ -78,7 +79,7 @@ export default function AdminProductForm() {
     }
 
     const sizeVal = p.size
-    if (p.category === 'Shoes' && sizeVal && sizeVal.startsWith('{')) {
+    if (normalizedCategory === 'Shoes' && sizeVal && sizeVal.startsWith('{')) {
       try {
         const parsed = JSON.parse(sizeVal)
         setShoeStocks({
@@ -93,7 +94,7 @@ export default function AdminProductForm() {
       } catch (e) {
         console.error('Error parsing shoe size stocks', e)
       }
-    } else if (p.category !== 'Shoes' && sizeVal && sizeVal.startsWith('{')) {
+    } else if (normalizedCategory !== 'Shoes' && sizeVal && sizeVal.startsWith('{')) {
       try {
         const parsed = JSON.parse(sizeVal)
         setClothingStocks({
@@ -108,7 +109,7 @@ export default function AdminProductForm() {
       } catch (e) {
         console.error('Error parsing clothing size stocks', e)
       }
-    } else if (p.category !== 'Shoes' && sizeVal) {
+    } else if (normalizedCategory !== 'Shoes' && sizeVal) {
       const stockVal = String(p.stock != null ? p.stock : p.stockQuantity || '0')
       setClothingStocks({
         'XS': sizeVal === 'XS' ? stockVal : '0',
@@ -249,6 +250,55 @@ export default function AdminProductForm() {
         throw new Error(errorMsg)
       }
 
+      try {
+        const p = await res.json()
+        const getProductImage = (catVal?: string) => {
+          const cat = (catVal || "").toLowerCase();
+          if (cat.includes("shirt") || cat.includes("top") || cat.includes("tee")) {
+            return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=200&h=200&fit=crop";
+          }
+          if (cat.includes("pant") || cat.includes("jean") || cat.includes("trouser") || cat.includes("bottom")) {
+            return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&h=200&fit=crop";
+          }
+          if (cat.includes("shoe") || cat.includes("sneaker") || cat.includes("footwear")) {
+            return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&h=200&fit=crop";
+          }
+          if (cat.includes("jacket") || cat.includes("coat") || cat.includes("outerwear")) {
+            return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=200&h=200&fit=crop";
+          }
+          return "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200&h=200&fit=crop";
+        };
+
+        const mappedItem = {
+          id: String(p.productid),
+          name: p.name,
+          slug: p.name.toLowerCase().replace(/\s+/g, "-"),
+          description: p.description || "",
+          price: Number(p.basePrice),
+          stock: Number(p.stockQuantity),
+          category: p.category,
+          image: p.image || getProductImage(p.category),
+          rating: 0,
+          reviewCount: 0,
+          createdAt: p.created_at || new Date().toISOString(),
+          size: p.size,
+        }
+
+        const stored = sessionStorage.getItem('ezshop_admin_products')
+        let list = stored ? JSON.parse(stored) : []
+        if (!Array.isArray(list)) list = []
+
+        let updatedList
+        if (isEdit) {
+          updatedList = list.map((item: any) => String(item.id) === String(id) ? mappedItem : item)
+        } else {
+          updatedList = [mappedItem, ...list]
+        }
+        sessionStorage.setItem('ezshop_admin_products', JSON.stringify(updatedList))
+      } catch (e) {
+        console.error('Failed to update sessionStorage products cache:', e)
+      }
+
       navigate('/admin/products')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
@@ -271,12 +321,23 @@ export default function AdminProductForm() {
           </div>
           <div>
             <Label htmlFor="category">Category</Label>
-            <Select value={form.category} onValueChange={(v) => update('category', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <select
+                id="category"
+                value={form.category}
+                onChange={(e) => update('category', e.target.value)}
+                className="flex h-10 w-full appearance-none items-center justify-between rounded-radius border border-border bg-input px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 leading-relaxed cursor-pointer"
+                required
+              >
+                <option value="" disabled>Select Category</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50 pointer-events-none" />
+            </div>
           </div>
           
           {form.category === 'Shoes' ? (
