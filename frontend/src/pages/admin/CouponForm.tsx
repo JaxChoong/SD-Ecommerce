@@ -5,8 +5,8 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Checkbox } from '../../components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useAuth } from '../../context/AuthContext'
+import { ChevronDown } from 'lucide-react'
 
 const categories = ['Shirts', 'Pants', 'Shoes', 'Jackets', 'Accessories', 'Dresses']
 
@@ -32,10 +32,10 @@ export default function AdminCouponForm() {
   const location = useLocation()
 
   const populateCoupon = (c: any) => {
-    const rawCategory = c.category || 'all'
-    const normalizedCategory = rawCategory.toLowerCase() === 'all'
+    const rawCategory = (c.category || 'all').toLowerCase().trim()
+    const normalizedCategory = rawCategory === 'all'
       ? 'all'
-      : (categories.find((cat) => cat.toLowerCase() === rawCategory.toLowerCase()) || 'all')
+      : (categories.find((cat) => cat.toLowerCase() === rawCategory) || 'all')
 
     setForm({
       code: c.code || c.promoCode || '',
@@ -138,6 +138,37 @@ export default function AdminCouponForm() {
         throw new Error(errorMsg)
       }
 
+      try {
+        const c = await res.json()
+        const mappedItem = {
+          id: String(c.promotionid),
+          code: c.promoCode,
+          description: c.name || '',
+          discountType: c.type as 'percentage' | 'fixed',
+          discountValue: Number(c.discountValue),
+          category: c.category || 'all',
+          expiresAt: c.endDate,
+          isActive: Boolean(c.IsActive),
+          usageCount: Number(c.usageCount || 0),
+          usageLimit: c.usageLimit != null ? Number(c.usageLimit) : undefined,
+          discountTarget: (c.discountTarget || 'base_price') as 'base_price' | 'shipping',
+        }
+
+        const stored = sessionStorage.getItem('ezshop_admin_coupons')
+        let list = stored ? JSON.parse(stored) : []
+        if (!Array.isArray(list)) list = []
+
+        let updatedList
+        if (isEdit) {
+          updatedList = list.map((item: any) => String(item.id) === String(id) ? mappedItem : item)
+        } else {
+          updatedList = [mappedItem, ...list]
+        }
+        sessionStorage.setItem('ezshop_admin_coupons', JSON.stringify(updatedList))
+      } catch (e) {
+        console.error('Failed to update sessionStorage coupons cache:', e)
+      }
+
       navigate('/admin/coupons')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
@@ -175,23 +206,38 @@ export default function AdminCouponForm() {
           </div>
           <div>
             <Label htmlFor="category">Applicable Clothing Category</Label>
-            <Select value={form.discountTarget === 'shipping' ? 'all' : form.category} onValueChange={(v) => update('category', v)} disabled={form.discountTarget === 'shipping'}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories (Global)</SelectItem>
-                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <select
+                id="category"
+                value={form.discountTarget === 'shipping' ? 'all' : form.category}
+                onChange={(e) => update('category', e.target.value)}
+                disabled={form.discountTarget === 'shipping'}
+                className="flex h-10 w-full appearance-none items-center justify-between rounded-radius border border-border bg-input px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 leading-relaxed cursor-pointer"
+              >
+                <option value="all">All Categories (Global)</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50 pointer-events-none" />
+            </div>
           </div>
           <div>
             <Label htmlFor="discountTarget">Discount Target</Label>
-            <Select value={form.discountTarget} onValueChange={(v) => update('discountTarget', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="base_price">Products (Base Price)</SelectItem>
-                <SelectItem value="shipping">Shipping Fee</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <select
+                id="discountTarget"
+                value={form.discountTarget}
+                onChange={(e) => update('discountTarget', e.target.value as any)}
+                className="flex h-10 w-full appearance-none items-center justify-between rounded-radius border border-border bg-input px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 leading-relaxed cursor-pointer"
+              >
+                <option value="base_price">Products (Base Price)</option>
+                <option value="shipping">Shipping Fee</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50 pointer-events-none" />
+            </div>
           </div>
           <div>
             <Label>Discount Type</Label>

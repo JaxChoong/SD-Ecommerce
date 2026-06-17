@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
@@ -31,10 +31,23 @@ interface DbPromotion {
 
 export default function AdminCoupons() {
   const { adminToken } = useAuth()
-  const [coupons, setCoupons] = useState<ExtendedCoupon[]>([])
+  const [coupons, setCoupons] = useState<ExtendedCoupon[]>(() => {
+    const stored = sessionStorage.getItem('ezshop_admin_coupons')
+    if (stored) {
+      try {
+        return JSON.parse(stored)
+      } catch (e) {
+        console.error('Failed to parse cached coupons', e)
+      }
+    }
+    return []
+  })
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    const stored = sessionStorage.getItem('ezshop_admin_coupons')
+    return !stored
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const [prevFilters, setPrevFilters] = useState({ search: '', selectedCategory: '' })
 
@@ -88,8 +101,15 @@ export default function AdminCoupons() {
       .finally(() => setLoading(false))
   }
 
+  const isInitialMount = useRef(true)
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (coupons.length > 0) {
+        return;
+      }
+    }
     fetchCoupons()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, selectedCategory, adminToken])
