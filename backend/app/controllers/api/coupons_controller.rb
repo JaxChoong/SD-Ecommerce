@@ -45,10 +45,13 @@ module Api
 
       if promotion.discountTarget == 'shipping'
         pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
-      elsif promotion.type == 'percentage'
-        pricing = Promotions::PercentageDiscountDecorator.new(pricing, promotion, resolved_items)
-      elsif promotion.type == 'fixed'
-        pricing = Promotions::FixedDiscountDecorator.new(pricing, promotion, resolved_items)
+      else
+        pricing = Promotions::PromotionContext.new(pricing, promotion, resolved_items)
+        if promotion.type == 'percentage'
+          pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promotion))
+        elsif promotion.type == 'fixed'
+          pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promotion))
+        end
       end
 
       pricing.calculate_total

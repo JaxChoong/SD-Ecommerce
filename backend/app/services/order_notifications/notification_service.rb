@@ -114,14 +114,14 @@ module OrderNotifications
         if promotion.discountTarget == 'shipping'
           current_pricing = Promotions::ShippingDiscountDecorator.new(current_pricing, promotion, resolved_items)
           applied_amount = current_pricing.shipping_discount - prev_shipping_discount
-        elsif promotion.type == 'percentage'
-          current_pricing = Promotions::PercentageDiscountDecorator.new(current_pricing, promotion, resolved_items)
-          applied_amount = current_pricing.discount - prev_discount
-        elsif promotion.type == 'fixed'
-          current_pricing = Promotions::FixedDiscountDecorator.new(current_pricing, promotion, resolved_items)
-          applied_amount = current_pricing.discount - prev_discount
         else
-          applied_amount = 0.0
+          current_pricing = Promotions::PromotionContext.new(current_pricing, promotion, resolved_items)
+          if promotion.type == 'percentage'
+            current_pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promotion))
+          elsif promotion.type == 'fixed'
+            current_pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promotion))
+          end
+          applied_amount = current_pricing.discount - prev_discount
         end
 
         val = {
@@ -160,10 +160,13 @@ module OrderNotifications
 
         if promotion.discountTarget == 'shipping'
           pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
-        elsif promotion.type == 'percentage'
-          pricing = Promotions::PercentageDiscountDecorator.new(pricing, promotion, resolved_items)
-        elsif promotion.type == 'fixed'
-          pricing = Promotions::FixedDiscountDecorator.new(pricing, promotion, resolved_items)
+        else
+          pricing = Promotions::PromotionContext.new(pricing, promotion, resolved_items)
+          if promotion.type == 'percentage'
+            pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promotion))
+          elsif promotion.type == 'fixed'
+            pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promotion))
+          end
         end
       end
 

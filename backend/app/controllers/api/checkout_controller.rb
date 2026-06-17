@@ -134,10 +134,11 @@ module Api
               current_pricing = Promotions::ShippingDiscountDecorator.new(current_pricing, promo, resolved_items)
               discount_val = current_pricing.shipping_discount - prev_shipping_discount
             else
+              current_pricing = Promotions::PromotionContext.new(current_pricing, promo, resolved_items)
               if promo.type == 'percentage'
-                current_pricing = Promotions::PercentageDiscountDecorator.new(current_pricing, promo, resolved_items)
+                current_pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promo))
               elsif promo.type == 'fixed'
-                current_pricing = Promotions::FixedDiscountDecorator.new(current_pricing, promo, resolved_items)
+                current_pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promo))
               end
               discount_val = current_pricing.discount - prev_discount
             end

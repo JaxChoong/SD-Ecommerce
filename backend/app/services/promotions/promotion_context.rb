@@ -1,25 +1,39 @@
 module Promotions
-  class PercentageDiscountDecorator < PromotionDecorator
+  class PromotionContext < PromotionDecorator
+    attr_accessor :discount_strategy
+
+    def initialize(wrapped_component, coupon, items)
+      super(wrapped_component, coupon, items)
+    end
+
+    def set_discount_strategy(strategy)
+      @discount_strategy = strategy
+    end
+
     def calculate_total
       [@wrapped_component.calculate_total - current_discount, 0.0].max
     end
 
-    # SOLID Principle: OCP (Open/Closed Principle) - We can introduce new promotion decorators
-    # (e.g., Buy One Free One) without modifying existing decorators or BaseCartPricing.
-    # SOLID Principle: LSP (Liskov Substitution Principle) - Any decorator subclassing
-    # PromotionDecorator can stand in place of IPricingComponent without breaking the app.
     def discount
-      # DECORATOR PATTERN BREAKPOINT
-      # Place debugger here to show recursive decorator calls.
-      debugger if Rails.env.development?
       @wrapped_component.discount + current_discount
     end
 
     private
 
     def current_discount
+      return 0.0 unless @discount_strategy
+
       applicable_sum = compute_applicable_sum
-      (applicable_sum * @coupon.discountValue.to_f) / 100.0
+      
+      if @coupon.type == 'percentage'
+        current_total = applicable_sum
+      elsif @coupon.type == 'fixed'
+        current_total = [0.0, applicable_sum - @wrapped_component.discount].max
+      else
+        current_total = 0.0
+      end
+
+      @discount_strategy.apply_discount(current_total)
     end
 
     def compute_applicable_sum

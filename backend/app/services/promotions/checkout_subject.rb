@@ -27,10 +27,13 @@ module Promotions
       @coupons.each do |promo|
         if promo.discountTarget == 'shipping'
           pricing = Promotions::ShippingDiscountDecorator.new(pricing, promo, @items)
-        elsif promo.type == 'percentage'
-          pricing = Promotions::PercentageDiscountDecorator.new(pricing, promo, @items)
-        elsif promo.type == 'fixed'
-          pricing = Promotions::FixedDiscountDecorator.new(pricing, promo, @items)
+        else
+          pricing = Promotions::PromotionContext.new(pricing, promo, @items)
+          if promo.type == 'percentage'
+            pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promo))
+          elsif promo.type == 'fixed'
+            pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promo))
+          end
         end
       end
 
