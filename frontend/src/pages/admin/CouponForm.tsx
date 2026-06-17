@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, useLocation } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -29,8 +29,55 @@ export default function AdminCouponForm() {
     discountTarget: 'base_price' as 'base_price' | 'shipping',
   })
 
+  const location = useLocation()
+
+  const populateCoupon = (c: any) => {
+    const rawCategory = c.category || 'all'
+    const normalizedCategory = rawCategory.toLowerCase() === 'all'
+      ? 'all'
+      : (categories.find((cat) => cat.toLowerCase() === rawCategory.toLowerCase()) || 'all')
+
+    setForm({
+      code: c.code || c.promoCode || '',
+      description: c.description || c.name || '',
+      discountType: (c.discountType || c.type || 'percentage') as 'percentage' | 'fixed',
+      discountValue: String(c.discountValue || ''),
+      category: normalizedCategory,
+      expiresAt: (c.expiresAt || c.endDate) ? (c.expiresAt || c.endDate).split('T')[0] : '',
+      isActive: c.isActive !== false && c.IsActive !== false,
+      hasQuantityLimit: c.usageLimit != null,
+      usageLimit: c.usageLimit != null ? String(c.usageLimit) : '',
+      discountTarget: (c.discountTarget || 'base_price') as 'base_price' | 'shipping',
+    })
+  }
+
   useEffect(() => {
-    if (!id || !adminToken) return
+    if (!id) return
+
+    // 1. Try to load from route state
+    const stateCoupon = location.state?.coupon
+    if (stateCoupon && String(stateCoupon.id) === String(id)) {
+      populateCoupon(stateCoupon)
+      return
+    }
+
+    // 2. Try to load from sessionStorage
+    const stored = sessionStorage.getItem('ezshop_admin_coupons')
+    if (stored) {
+      try {
+        const list = JSON.parse(stored)
+        const found = list.find((c: any) => String(c.id) === String(id))
+        if (found) {
+          populateCoupon(found)
+          return
+        }
+      } catch (e) {
+        console.error('Error parsing stored coupons', e)
+      }
+    }
+
+    // 3. Fallback to fetching (hits breakpoints on backend if in development)
+    if (!adminToken) return
     fetch(`/api/admin/promotions/${id}`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
@@ -41,18 +88,7 @@ export default function AdminCouponForm() {
         return r.json()
       })
       .then((c) => {
-        setForm({
-          code: c.promoCode || '',
-          description: c.name || '',
-          discountType: (c.type || 'percentage') as 'percentage' | 'fixed',
-          discountValue: String(c.discountValue || ''),
-          category: c.category || 'all',
-          expiresAt: c.endDate ? c.endDate.split('T')[0] : '',
-          isActive: c.IsActive !== false,
-          hasQuantityLimit: c.usageLimit != null,
-          usageLimit: c.usageLimit != null ? String(c.usageLimit) : '',
-          discountTarget: (c.discountTarget || 'base_price') as 'base_price' | 'shipping',
-        })
+        populateCoupon(c)
       })
       .catch((err) => {
         console.error(err)

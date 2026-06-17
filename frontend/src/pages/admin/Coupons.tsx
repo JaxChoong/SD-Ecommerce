@@ -78,6 +78,11 @@ export default function AdminCoupons() {
           discountTarget: (c.discountTarget || 'base_price') as 'base_price' | 'shipping',
         }))
         setCoupons(mapped)
+        try {
+          sessionStorage.setItem('ezshop_admin_coupons', JSON.stringify(mapped));
+        } catch (e) {
+          console.error('Failed to save coupons to sessionStorage', e);
+        }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false))
@@ -219,7 +224,7 @@ export default function AdminCoupons() {
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/admin/coupons/${c.id}/edit`}><Pencil className="h-4 w-4" /></Link>
+                          <Link to={`/admin/coupons/${c.id}/edit`} state={{ coupon: c }}><Pencil className="h-4 w-4" /></Link>
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}>
                           <Trash2 className="h-4 w-4 text-error" />
@@ -257,7 +262,7 @@ export default function AdminCoupons() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                        <Link to={`/admin/coupons/${c.id}/edit`}><Pencil className="h-4 w-4" /></Link>
+                        <Link to={`/admin/coupons/${c.id}/edit`} state={{ coupon: c }}><Pencil className="h-4 w-4" /></Link>
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} className="h-8 w-8 p-0">
                         <Trash2 className="h-4 w-4 text-error" />

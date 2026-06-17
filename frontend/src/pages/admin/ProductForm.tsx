@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, useLocation } from 'react-router'
 import { Container } from '../../components/layout/container'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -58,8 +58,97 @@ export default function AdminProductForm() {
     'One Size': '0',
   })
 
+  const location = useLocation()
+
+  const populateProduct = (p: any) => {
+    const normalizedCategory = categories.find(
+      (cat) => cat.toLowerCase() === (p.category || '').toLowerCase()
+    ) || 'Shirts'
+
+    setForm({
+      name: p.name || '',
+      description: p.description || '',
+      category: normalizedCategory,
+      size: p.size || 'M',
+      basePrice: String(p.price != null ? p.price : p.basePrice || ''),
+      stockQuantity: String(p.stock != null ? p.stock : p.stockQuantity || ''),
+    })
+    if (p.image) {
+      setPreviewUrl(p.image)
+    }
+
+    const sizeVal = p.size
+    if (p.category === 'Shoes' && sizeVal && sizeVal.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(sizeVal)
+        setShoeStocks({
+          '39': String(parsed['39'] || '0'),
+          '40': String(parsed['40'] || '0'),
+          '41': String(parsed['41'] || '0'),
+          '42': String(parsed['42'] || '0'),
+          '43': String(parsed['43'] || '0'),
+          '44': String(parsed['44'] || '0'),
+          '45': String(parsed['45'] || '0'),
+        })
+      } catch (e) {
+        console.error('Error parsing shoe size stocks', e)
+      }
+    } else if (p.category !== 'Shoes' && sizeVal && sizeVal.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(sizeVal)
+        setClothingStocks({
+          'XS': String(parsed['XS'] || '0'),
+          'S': String(parsed['S'] || '0'),
+          'M': String(parsed['M'] || '0'),
+          'L': String(parsed['L'] || '0'),
+          'XL': String(parsed['XL'] || '0'),
+          'XXL': String(parsed['XXL'] || '0'),
+          'One Size': String(parsed['One Size'] || '0'),
+        })
+      } catch (e) {
+        console.error('Error parsing clothing size stocks', e)
+      }
+    } else if (p.category !== 'Shoes' && sizeVal) {
+      const stockVal = String(p.stock != null ? p.stock : p.stockQuantity || '0')
+      setClothingStocks({
+        'XS': sizeVal === 'XS' ? stockVal : '0',
+        'S': sizeVal === 'S' ? stockVal : '0',
+        'M': sizeVal === 'M' ? stockVal : '0',
+        'L': sizeVal === 'L' ? stockVal : '0',
+        'XL': sizeVal === 'XL' ? stockVal : '0',
+        'XXL': sizeVal === 'XXL' ? stockVal : '0',
+        'One Size': sizeVal === 'One Size' ? stockVal : '0',
+      })
+    }
+  }
+
   useEffect(() => {
-    if (!id || !adminToken) return
+    if (!id) return
+
+    // 1. Try to load from route state
+    const stateProduct = location.state?.product
+    if (stateProduct && String(stateProduct.id) === String(id)) {
+      populateProduct(stateProduct)
+      return
+    }
+
+    // 2. Try to load from sessionStorage
+    const stored = sessionStorage.getItem('ezshop_admin_products')
+    if (stored) {
+      try {
+        const list = JSON.parse(stored)
+        const found = list.find((p: any) => String(p.id) === String(id))
+        if (found) {
+          populateProduct(found)
+          return
+        }
+      } catch (e) {
+        console.error('Error parsing stored products', e)
+      }
+    }
+
+    // 3. Fallback to fetching (hits breakpoints on backend if in development)
+    if (!adminToken) return
     fetch(`/api/admin/inventory/${id}`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
@@ -70,60 +159,16 @@ export default function AdminProductForm() {
         return r.json()
       })
       .then((p) => {
-        setForm({
-          name: p.name || '',
-          description: p.description || '',
-          category: p.category || 'Shirts',
-          size: p.size || 'M',
-          basePrice: String(p.basePrice || ''),
-          stockQuantity: String(p.stockQuantity || ''),
+        populateProduct({
+          id: String(p.productid),
+          name: p.name,
+          description: p.description,
+          category: p.category,
+          basePrice: p.basePrice,
+          stockQuantity: p.stockQuantity,
+          size: p.size,
+          image: p.image,
         })
-        if (p.image) {
-          setPreviewUrl(p.image)
-        }
-
-        // If it's a shoe and has size-stock JSON in size column, parse it
-        if (p.category === 'Shoes' && p.size && p.size.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(p.size)
-            setShoeStocks({
-              '39': String(parsed['39'] || '0'),
-              '40': String(parsed['40'] || '0'),
-              '41': String(parsed['41'] || '0'),
-              '42': String(parsed['42'] || '0'),
-              '43': String(parsed['43'] || '0'),
-              '44': String(parsed['44'] || '0'),
-              '45': String(parsed['45'] || '0'),
-            })
-          } catch (e) {
-            console.error('Error parsing shoe size stocks', e)
-          }
-        } else if (p.category !== 'Shoes' && p.size && p.size.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(p.size)
-            setClothingStocks({
-              'XS': String(parsed['XS'] || '0'),
-              'S': String(parsed['S'] || '0'),
-              'M': String(parsed['M'] || '0'),
-              'L': String(parsed['L'] || '0'),
-              'XL': String(parsed['XL'] || '0'),
-              'XXL': String(parsed['XXL'] || '0'),
-              'One Size': String(parsed['One Size'] || '0'),
-            })
-          } catch (e) {
-            console.error('Error parsing clothing size stocks', e)
-          }
-        } else if (p.category !== 'Shoes' && p.size) {
-          setClothingStocks({
-            'XS': p.size === 'XS' ? String(p.stockQuantity || '0') : '0',
-            'S': p.size === 'S' ? String(p.stockQuantity || '0') : '0',
-            'M': p.size === 'M' ? String(p.stockQuantity || '0') : '0',
-            'L': p.size === 'L' ? String(p.stockQuantity || '0') : '0',
-            'XL': p.size === 'XL' ? String(p.stockQuantity || '0') : '0',
-            'XXL': p.size === 'XXL' ? String(p.stockQuantity || '0') : '0',
-            'One Size': p.size === 'One Size' ? String(p.stockQuantity || '0') : '0',
-          })
-        }
       })
       .catch((err) => {
         console.error(err)

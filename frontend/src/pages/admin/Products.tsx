@@ -127,8 +127,14 @@ export default function AdminProducts() {
           rating: 0,
           reviewCount: 0,
           createdAt: p.created_at,
+          size: p.size,
         }));
         setProducts(mapped);
+        try {
+          sessionStorage.setItem('ezshop_admin_products', JSON.stringify(mapped));
+        } catch (e) {
+          console.error('Failed to save products to sessionStorage', e);
+        }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
@@ -283,7 +289,7 @@ export default function AdminProducts() {
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/admin/products/${p.id}/edit`}>
+                          <Link to={`/admin/products/${p.id}/edit`} state={{ product: p }}>
                             <Pencil className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -331,7 +337,7 @@ export default function AdminProducts() {
                     asChild
                     className="h-8 w-8 p-0"
                   >
-                    <Link to={`/admin/products/${p.id}/edit`}>
+                    <Link to={`/admin/products/${p.id}/edit`} state={{ product: p }}>
                       <Pencil className="h-4 w-4" />
                     </Link>
                   </Button>
