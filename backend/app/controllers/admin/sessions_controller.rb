@@ -32,6 +32,15 @@ module Admin
     # GET /admin/session
     def show
       token = request.headers["Authorization"]&.split(" ")&.last
+      
+      # Demonstration: Attempt to instantiate the Singleton (will raise NoMethodError)
+      begin
+        AdminSessionManager.new
+      rescue NoMethodError => e
+        puts "\n\e[1;31m[SINGLETON CONSTRAINT PROVEN]\e[0m: #{e.message}\n\n"
+        debugger
+      end
+
       if AdminSessionManager.instance.validate_session(token)
         render json: {
           valid: true,
