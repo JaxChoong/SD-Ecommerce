@@ -29,6 +29,10 @@ module OrderNotifications
       @notification_message = nil
     end
 
+    # SOLID Principle: OCP (Open/Closed Principle)
+    # OrderProcessor can be extended with new observer classes without changing
+    # its cart mutation logic. Any new observer only needs to be attached here
+    # and implement update(...).
     def attachObserver(observer)
       @observers << observer unless @observers.include?(observer)
     end
