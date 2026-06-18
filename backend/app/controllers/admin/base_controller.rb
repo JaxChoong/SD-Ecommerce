@@ -8,13 +8,7 @@ module Admin
 
     # Extract session token from Authorization: Bearer <token>
     def token_from_header
-      token = request.headers["Authorization"]&.split(" ")&.last
-      Rails.logger.info "--- DEBUG AUTH ---"
-      Rails.logger.info "Header Token: #{token.inspect}"
-      Rails.logger.info "Active Token: #{AdminSessionManager.instance.active_token.inspect}"
-      Rails.logger.info "Expired?: #{AdminSessionManager.instance.expires_at ? Time.current > AdminSessionManager.instance.expires_at : 'no session'}"
-      Rails.logger.info "------------------"
-      token
+      request.headers["Authorization"]&.split(" ")&.last
     end
 
     # Return a protective proxy instance for the given service
