@@ -27,6 +27,7 @@ module PaymentStrategy
     end
 
     def self.build_strategy(method)
+      debugger if Rails.env.development?
       case method.to_s
       when "credit_card"
         CreditCardStrategy.new
