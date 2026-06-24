@@ -37,8 +37,8 @@ module Admin
       begin
         AdminSessionManager.new
       rescue NoMethodError => e
-        puts "\n\e[1;31m[SINGLETON CONSTRAINT PROVEN]\e[0m: #{e.message}\n\n"
         debugger
+        puts "\n\e[1;31m[SINGLETON CONSTRAINT PROVEN]\e[0m: #{e.message}\n\n"
       end
 
       if AdminSessionManager.instance.validate_session(token)
