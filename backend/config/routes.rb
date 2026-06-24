@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   resources :products, only: [ :index, :show ]
   resources :promotions, only: [ :index ]
 
-  resource :cart, only: [:show], controller: :carts do
+  resource :cart, only: [ :show ], controller: :carts do
   post :items, to: "carts#add_item"
   delete "items/:id", to: "carts#remove_item"
   patch "items/:id", to: "carts#update_quantity"

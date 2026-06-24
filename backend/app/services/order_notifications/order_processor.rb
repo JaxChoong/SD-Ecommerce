@@ -8,11 +8,11 @@ module OrderNotifications
       @items = items.map { |item| normalize_item(item) }
       codes_input = if coupon_codes.is_a?(Array)
                       coupon_codes
-                    elsif coupon_code.present?
-                      coupon_code.to_s.split(',').map(&:strip)
-                    else
+      elsif coupon_code.present?
+                      coupon_code.to_s.split(",").map(&:strip)
+      else
                       []
-                    end
+      end
       @coupon_codes = codes_input.map(&:upcase).reject(&:blank?).uniq
       @coupon_code = @coupon_codes.last
       @applied_coupon = nil
@@ -154,7 +154,7 @@ module OrderNotifications
         product_image: data["product_image"] || data[:product_image] || data["productImage"] || data[:productImage],
         size: data["size"] || data[:size] || data["selectedSize"] || data[:selectedSize],
         price: (data["price"] || data[:price]).to_f,
-        quantity: [(data["quantity"] || data[:quantity]).to_i, 1].max
+        quantity: [ (data["quantity"] || data[:quantity]).to_i, 1 ].max
       }
     end
 

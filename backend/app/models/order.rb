@@ -42,15 +42,14 @@ class Order < ApplicationRecord
   end
 
   def shipping_discount
-    order_promotions.select { |op| op.promotion&.discountTarget == 'shipping' }.sum(&:discountApplied).round(2)
+    order_promotions.select { |op| op.promotion&.discountTarget == "shipping" }.sum(&:discountApplied).round(2)
   end
 
   def shipping_cost
-    [(base_shipping - shipping_discount).to_f, 0.0].max.round(2)
+    [ (base_shipping - shipping_discount).to_f, 0.0 ].max.round(2)
   end
 
   def item_discount
-    order_promotions.reject { |op| op.promotion&.discountTarget == 'shipping' }.sum(&:discountApplied).round(2)
+    order_promotions.reject { |op| op.promotion&.discountTarget == "shipping" }.sum(&:discountApplied).round(2)
   end
 end
-

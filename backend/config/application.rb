@@ -11,7 +11,7 @@ if Rails.env.development? || Rails.env.test?
       key, value = line.strip.split("=", 2)
       if key && value
         # Strip surrounding quotes if present
-        value = value.gsub(/\A['"]|['"]\z/, '')
+        value = value.gsub(/\A['"]|['"]\z/, "")
         ENV[key] = value
       end
     end

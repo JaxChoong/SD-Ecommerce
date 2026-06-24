@@ -32,7 +32,7 @@ module Api
         { product: product, price: item[:price].to_f, quantity: item[:quantity].to_i }
       end
 
-      if promotion.category.present? && promotion.category != 'all'
+      if promotion.category.present? && promotion.category != "all"
         has_matching_item = resolved_items.any? { |item| item[:product]&.category&.downcase == promotion.category.downcase }
         unless has_matching_item
           render json: { isValid: false, errors: { code: "NOT_APPLICABLE", message: "This coupon is not applicable to any items in your cart." } }, status: :unprocessable_entity
@@ -43,19 +43,23 @@ module Api
       base_shipping = cart_total >= 100 ? 0.0 : (cart_total > 0 ? 10.0 : 0.0)
       pricing = Promotions::BaseCartPricing.new(cart_total, base_shipping)
 
-      if promotion.discountTarget == 'shipping'
+      if promotion.discountTarget == "shipping"
         pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
       else
         pricing = Promotions::PromotionContext.new(pricing, promotion, resolved_items)
-        if promotion.type == 'percentage'
+
+        # CLIENT BREAKPOINT
+        # Place debugger here to show the Client (Controller) dynamically assigning the Strategy.
+        debugger if Rails.env.development?
+
+        if promotion.type == "percentage"
           pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promotion))
-        elsif promotion.type == 'fixed'
+        elsif promotion.type == "fixed"
           pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promotion))
         end
       end
 
-      pricing.calculate_total
-      applied_discount = (promotion.discountTarget == 'shipping') ? pricing.shipping_discount : pricing.discount
+      applied_discount = (promotion.discountTarget == "shipping") ? pricing.shipping_discount : pricing.discount
 
       render json: {
         isValid: true,

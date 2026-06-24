@@ -10,8 +10,8 @@ module Promotions
       # STRATEGY PATTERN BREAKPOINT
       # Place debugger here to show execution of the fixed amount calculation.
       debugger if Rails.env.development?
-      
-      [current_total, @coupon.discountValue.to_f].min
+
+      [ current_total, @coupon.discountValue.to_f ].min
     end
   end
 end

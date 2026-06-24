@@ -3,16 +3,16 @@ module Promotions
     attr_accessor :items, :subtotal, :shipping, :coupon, :coupons, :discount, :shipping_discount
 
     def initialize(items:, subtotal:, shipping:, coupon: nil, coupons: nil)
-      @items            = items  
+      @items            = items
       @subtotal         = subtotal.to_f
       @shipping         = shipping.to_f
       @coupon           = coupon
-      @coupons          = coupons || [coupon].compact
+      @coupons          = coupons || [ coupon ].compact
       @discount         = 0.0
       @shipping_discount = 0.0
       @observers        = []
     end
- 
+
     def attach(observer)
       @observers << observer unless @observers.include?(observer)
     end
@@ -25,13 +25,13 @@ module Promotions
       pricing = Promotions::BaseCartPricing.new(@subtotal, @shipping)
 
       @coupons.each do |promo|
-        if promo.discountTarget == 'shipping'
+        if promo.discountTarget == "shipping"
           pricing = Promotions::ShippingDiscountDecorator.new(pricing, promo, @items)
         else
           pricing = Promotions::PromotionContext.new(pricing, promo, @items)
-          if promo.type == 'percentage'
+          if promo.type == "percentage"
             pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promo))
-          elsif promo.type == 'fixed'
+          elsif promo.type == "fixed"
             pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promo))
           end
         end

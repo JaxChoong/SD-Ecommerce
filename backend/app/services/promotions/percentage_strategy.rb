@@ -10,7 +10,7 @@ module Promotions
       # STRATEGY PATTERN BREAKPOINT
       # Place debugger here to show execution of the percentage calculation.
       debugger if Rails.env.development?
-      
+
       (current_total * @coupon.discountValue.to_f) / 100.0
     end
   end

@@ -19,22 +19,22 @@ module OrderNotifications
 
     def prepare_user_notification(orderProcessor)
       orderProcessor.notification_message = case orderProcessor.last_event
-                                            when :item_added
+      when :item_added
                                               "Item added to cart."
-                                            when :item_removed
+      when :item_removed
                                               "Item removed from cart."
-                                            when :quantity_updated
+      when :quantity_updated
                                               "Cart quantity updated."
-                                            when :cart_cleared
+      when :cart_cleared
                                               "Cart cleared."
-                                            else
+      else
                                               nil
-                                            end
+      end
     end
 
     def refresh_stock_warnings(orderProcessor)
       orderProcessor.clear_stock_warnings!
-
+      debugger if Rails.env.development?
       orderProcessor.items.each do |item|
         product = Product.find_by(productid: item[:product_id])
         unless product
@@ -111,14 +111,14 @@ module OrderNotifications
         prev_discount = current_pricing.discount
         prev_shipping_discount = current_pricing.shipping_discount
 
-        if promotion.discountTarget == 'shipping'
+        if promotion.discountTarget == "shipping"
           current_pricing = Promotions::ShippingDiscountDecorator.new(current_pricing, promotion, resolved_items)
           applied_amount = current_pricing.shipping_discount - prev_shipping_discount
         else
           current_pricing = Promotions::PromotionContext.new(current_pricing, promotion, resolved_items)
-          if promotion.type == 'percentage'
+          if promotion.type == "percentage"
             current_pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promotion))
-          elsif promotion.type == 'fixed'
+          elsif promotion.type == "fixed"
             current_pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promotion))
           end
           applied_amount = current_pricing.discount - prev_discount
@@ -158,13 +158,13 @@ module OrderNotifications
         promotion = Promotion.find_by("LOWER(\"promoCode\") = ?", code.to_s.downcase)
         next unless promotion
 
-        if promotion.discountTarget == 'shipping'
+        if promotion.discountTarget == "shipping"
           pricing = Promotions::ShippingDiscountDecorator.new(pricing, promotion, resolved_items)
         else
           pricing = Promotions::PromotionContext.new(pricing, promotion, resolved_items)
-          if promotion.type == 'percentage'
+          if promotion.type == "percentage"
             pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promotion))
-          elsif promotion.type == 'fixed'
+          elsif promotion.type == "fixed"
             pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promotion))
           end
         end
@@ -173,7 +173,7 @@ module OrderNotifications
       orderProcessor.total             = round_money(pricing.calculate_total)
       orderProcessor.discount          = round_money(pricing.discount)
       orderProcessor.shipping_discount = round_money(pricing.shipping_discount)
-      orderProcessor.shipping          = round_money([base_shipping - orderProcessor.shipping_discount, 0.0].max)
+      orderProcessor.shipping          = round_money([ base_shipping - orderProcessor.shipping_discount, 0.0 ].max)
     end
 
     def log_cart_update(orderProcessor)
@@ -212,7 +212,7 @@ module OrderNotifications
       if promotion.type == "percentage"
         subtotal * (promotion.discountValue.to_f / 100.0)
       else
-        [promotion.discountValue.to_f, subtotal].min
+        [ promotion.discountValue.to_f, subtotal ].min
       end
     end
 

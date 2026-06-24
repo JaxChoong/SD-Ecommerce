@@ -8,11 +8,11 @@ module Api
       payment_params   = params.require(:paymentMethod).permit(:type, :provider, :bank).to_h
       coupon_codes = if params[:couponCodes].is_a?(Array)
                        params[:couponCodes]
-                     elsif params[:couponCode].present?
-                       params[:couponCode].to_s.split(',').map(&:strip)
-                     else
+      elsif params[:couponCode].present?
+                       params[:couponCode].to_s.split(",").map(&:strip)
+      else
                        []
-                     end
+      end
       coupon_codes = coupon_codes.map(&:upcase).reject(&:blank?).uniq
 
       method_type = payment_params["type"].to_s
@@ -130,14 +130,14 @@ module Api
             prev_discount = current_pricing.discount
             prev_shipping_discount = current_pricing.shipping_discount
 
-            if promo.discountTarget == 'shipping'
+            if promo.discountTarget == "shipping"
               current_pricing = Promotions::ShippingDiscountDecorator.new(current_pricing, promo, resolved_items)
               discount_val = current_pricing.shipping_discount - prev_shipping_discount
             else
               current_pricing = Promotions::PromotionContext.new(current_pricing, promo, resolved_items)
-              if promo.type == 'percentage'
+              if promo.type == "percentage"
                 current_pricing.set_discount_strategy(Promotions::PercentageStrategy.new(promo))
-              elsif promo.type == 'fixed'
+              elsif promo.type == "fixed"
                 current_pricing.set_discount_strategy(Promotions::FixedAmountStrategy.new(promo))
               end
               discount_val = current_pricing.discount - prev_discount
@@ -154,6 +154,11 @@ module Api
           # Execute payment via Strategy pattern
           strategy = PaymentStrategy::CheckoutContext.build_strategy(method_type)
           context  = PaymentStrategy::CheckoutContext.new
+
+          # PAYMENT STRATEGY BREAKPOINT
+          # Place debugger here to show the Client (Controller) assigning the Payment Strategy.
+          debugger if Rails.env.development?
+
           context.set_payment_method(strategy)
           gateway_result = context.execute_checkout(final_total)
 
@@ -197,4 +202,3 @@ module Api
     end
   end
 end
-

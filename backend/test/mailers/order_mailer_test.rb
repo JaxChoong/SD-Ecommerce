@@ -60,8 +60,8 @@ class OrderMailerTest < ActionMailer::TestCase
       email.deliver_now
     end
 
-    assert_equal ["john@example.com"], email.to
-    assert_equal ["choongjiaxuen@gmail.com"], email.from
+    assert_equal [ "john@example.com" ], email.to
+    assert_equal [ "choongjiaxuen@gmail.com" ], email.from
     assert_match "Your EZ-Shop Order Receipt - Order ##{order.orderid}", email.subject
 
     # Assert body content
